@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <title id="sidtitel">Pendla - Tid och Avstånd</title>
+</head>
+<body>
+    <p><a href="index.html">← Tillbaka till start</a></p>
+    
+    <h1 id="rubrik">Laddar ruttinformation...</h1>
+    <div id="innehall">Söker efter objektiv data...</div>
+
+    <script>
+        // 1. Hämta startort och destination från URL-adressen
+        const urlParams = new URLSearchParams(window.location.search);
+        const fran = urlParams.get('fran');
+        const till = urlParams.get('till');
+
+        if (fran && till) {
+            // Uppdatera sidans titel och rubrik direkt
+            document.getElementById('sidtitel').innerText = `Pendla från ${fran} till ${till} - Tid, avstånd och kostnad`;
+            document.getElementById('rubrik').innerText = `Pendla från ${fran} till ${till}`;
+
+            // 2. Läs in databasen (rutter.csv)
+            fetch('rutter.csv')
+                .then(response => response.text())
+                .then(data => {
+                    let rader = data.split('\n');
+                    let ruttHittad = false;
+
+                    // Leta efter rätt rad i kalkylarket
+                    for (let i = 1; i < rader.length; i++) {
+                        let kolumner = rader[i].split(',');
+                        if (kolumner.length >= 5) {
+                            let csvFran = kolumner[0].trim();
+                            let csvTill = kolumner[1].trim();
+                            let distans = kolumner[2].trim();
+                            let tid = kolumner[3].trim();
+                            let genereradText = kolumner[4].replace(/"/g, '').trim(); // Tar bort eventuella citattecken
+
+                            // Om vi hittar städerna i CSV-filen, visa den objektiva texten
+                            if (csvFran.toLowerCase() === fran.toLowerCase() && csvTill.toLowerCase() === till.toLowerCase()) {
+                                document.getElementById('innehall').innerHTML = `
+                                    <p><strong>Distans:</strong> ${distans} km</p>
+                                    <p><strong>Körtid:</strong> ${tid} minuter</p>
+                                    <hr>
+                                    <p style="font-size: 1.2em; line-height: 1.6;">${genereradText}</p>
+                                `;
+                                ruttHittad = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!ruttHittad) {
+                        document.getElementById('innehall').innerText = "Kunde inte hitta denna specifika rutt i databasen.";
+                    }
+                });
+        } else {
+            document.getElementById('rubrik').innerText = "Felaktig länk";
+            document.getElementById('innehall').innerText = "Vänligen gå tillbaka till startsidan och välj en rutt.";
+        }
+    </script>
+</body>
+</html>
