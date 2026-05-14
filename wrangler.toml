@@ -3,4 +3,9 @@ compatibility_date = "2026-05-14"
 
 [assets]
 directory = "."
-not_found_handling = "404-page"
+
+[[assets.headers]]
+styles = ["/sitemap.xml"]
+[assets.headers.values]
+Content-Type = "application/xml; charset=utf-8"
+Cache-Control = "public, max-age=86400"
