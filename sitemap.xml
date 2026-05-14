@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="sitemaps.org">
+  <url>
+    <loc>https://pendlings-app1.t-767929534-cloudflare.workers.dev/</loc>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <!-- KLISTRA IN DINA RADER FRÅN GOOGLE SHEETS HÄR UNDER -->
+<url><loc>https://pendlings-app1.t-767929534-cloudflare.workers.dev/?fran=Stockholm&amp;till=Uppsala</loc><changefreq>monthly</changefreq></url>
+<url><loc>https://pendlings-app1.t-767929534-cloudflare.workers.dev/?fran=G%C3%B6teborg&amp;till=Bor%C3%A5s</loc><changefreq>monthly</changefreq></url>
+<url><loc>https://pendlings-app1.t-767929534-cloudflare.workers.dev/?fran=Malm%C3%B6&amp;till=Lund</loc><changefreq>monthly</changefreq></url>
+<url><loc>https://pendlings-app1.t-767929534-cloudflare.workers.dev/?fran=Uppsala&amp;till=G%C3%A4vle</loc><changefreq>monthly</changefreq></url>
+<url><loc>https://pendlings-app1.t-767929534-cloudflare.workers.dev/?fran=V%C3%A4ster%C3%A5s&amp;till=Eskilstuna</loc><changefreq>monthly</changefreq></url>
+<url><loc>https://pendlings-app1.t-767929534-cloudflare.workers.dev/?fran=%C3%96rebro&amp;till=Karlskoga</loc><changefreq>monthly</changefreq></url>
+  <!-- SLUT PÅ RADER -->
+</urlset>
