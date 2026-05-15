@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="sidtitel">Rutt - Tid, Avstånd och Driftkostnad</title>
+    <title id="sidtitel">Pendla - Tid, Avstånd och Driftkostnad</title>
     <style>
         :root {
             --bg-color: #f4f7f6;
@@ -14,6 +14,16 @@
             --text-light: #7f8c8d;
             --shadow: 0 4px 6px rgba(0,0,0,0.05);
             --radius: 8px;
+            --intensiv-färg: #2c3e50;
+        }
+
+        /* Dark Mode Färgvariabler */
+        body.dark-theme {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --primary-color: #ecf0f1;
+            --text-color: #e0e0e0;
+            --text-light: #a0a0a0;
             --intensiv-färg: #2c3e50;
         }
 
@@ -29,6 +39,7 @@
             color: var(--text-color);
             line-height: 1.6;
             padding: 20px;
+            transition: background-color 0.3s, color 0.3s;
         }
 
         .container {
@@ -39,6 +50,7 @@
             border-radius: var(--radius);
             box-shadow: var(--shadow);
             border-top: 5px solid var(--accent-color);
+            transition: background-color 0.3s;
         }
 
         .nav-rad {
@@ -76,15 +88,22 @@
             transition: all 0.2s;
         }
 
+        body.dark-theme .dela-knapp {
+            border-color: #444;
+        }
+
         .dela-knapp:hover {
-            background: #fafbfc;
-            border-color: var(--text-light);
+            background: rgba(0,0,0,0.02);
         }
 
         header {
             margin-bottom: 25px;
             border-bottom: 2px solid #eee;
             padding-bottom: 20px;
+        }
+
+        body.dark-theme header {
+            border-bottom-color: #333;
         }
 
         h1 {
@@ -107,7 +126,6 @@
             }
         }
 
-        /* Dynamiska färgblock för mätvärden */
         .kalkyl-kort {
             padding: 20px;
             border-radius: var(--radius);
@@ -117,7 +135,7 @@
         }
 
         .kalkyl-kort.tid {
-            background-color: var(--intensiv-färg);
+            background-color: #2c3e50;
             border-left: 5px solid var(--accent-color);
         }
 
@@ -143,7 +161,7 @@
             font-weight: bold;
         }
 
-        /* Textblocket för genererad text */
+        /* Allmänna textblock */
         .text-block {
             background: #fafbfc;
             border: 1px solid #e1e8ed;
@@ -152,7 +170,13 @@
             font-size: 1.05rem;
             line-height: 1.6;
             color: var(--text-color);
-            margin-bottom: 25px;
+            margin-bottom: 20px;
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+
+        body.dark-theme .text-block {
+            background: #252525;
+            border-color: #383838;
         }
 
         .beräknings-notis {
@@ -164,13 +188,34 @@
             display: block;
         }
 
+        body.dark-theme .beräknings-notis {
+            border-top-color: #333;
+        }
+
+        /* Ankomstväljare design inputs */
+        .ankomst-input-fält {
+            padding: 6px 10px;
+            border: 2px solid #e1e8ed;
+            border-radius: 6px;
+            font-size: 1rem;
+            background: var(--card-bg);
+            color: var(--text-color);
+            outline: none;
+            margin-left: 10px;
+            transition: border-color 0.2s;
+        }
+
+        .ankomst-input-fält:focus {
+            border-color: var(--accent-color);
+        }
+
         /* Google Maps-knapp */
         .maps-knapp {
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 10px;
-            background: var(--primary-color);
+            background: #2c3e50;
             color: white;
             text-decoration: none;
             padding: 14px;
@@ -181,9 +226,39 @@
             transition: background 0.2s, transform 0.1s;
         }
 
+        body.dark-theme .maps-knapp {
+            background: #34495e;
+        }
+
         .maps-knapp:hover {
-            background: #1a252f;
+            opacity: 0.9;
             transform: translateY(-1px);
+        }
+
+        /* Flytande Dark Mode knapp */
+        .darkmode-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #2c3e50;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            font-size: 1.2rem;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 45px;
+            height: 45px;
+            transition: transform 0.2s;
+        }
+
+        .darkmode-btn:hover {
+            transform: scale(1.05);
         }
 
         .laddar, .felmeddelande {
@@ -208,7 +283,7 @@
         </div>
         
         <header>
-            <h1 id="rubrik">Laddar ruttinformation...</h1>
+            <h1 id="rubrik">Laddar Gyllenstormś ruttinformation...</h1>
         </header>
         
         <div id="innehall">
@@ -216,13 +291,26 @@
         </div>
     </div>
 
+    <!-- Flytande Nattläge-Knapp -->
+    <button id="darkmode-btn" class="darkmode-btn" title="Växla nattläge">🌓</button>
+
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const fran = urlParams.get('fran');
         const till = urlParams.get('till');
 
-        // Justerad bränslekostnad per km (1.15 kr/km motsvarar ca 11,50 kr/mil i ren bränslekostnad)
+        // Bränslekostnad per km (1.15 kr/km = 11,50 kr/mil)
         const KR_PER_KM = 1.15; 
+
+        // Hantera nattläges-status direkt vid laddning
+        const dmBtn = document.getElementById('darkmode-btn');
+        if (localStorage.getItem('mörkt_tema') === 'true') {
+            document.body.classList.add('dark-theme');
+        }
+        dmBtn.addEventListener('click', () => {
+            document.body.classList.toggle('dark-theme');
+            localStorage.setItem('mörkt_tema', document.body.classList.contains('dark-theme'));
+        });
 
         if (fran && till) {
             document.getElementById('sidtitel').innerText = `Pendla från ${fran} till ${till} - Tid, avstånd och kostnad`;
@@ -255,15 +343,20 @@
 
                             if (csvFran.toLowerCase() === fran.toLowerCase() && csvTill.toLowerCase() === till.toLowerCase()) {
                                 
-                                // Plockar ut enbart siffror från distans-kolumnen för beräkningen
                                 const numeriskDistans = parseFloat(distans.replace(/[^\d.]/g, ''));
                                 let kostnadText = "-";
+                                let manadsKostnad = "-";
+
                                 if (!isNaN(numeriskDistans)) {
+                                    // Enkel resa bränsle
                                     kostnadText = Math.round(numeriskDistans * KR_PER_KM) + " kr";
+                                    // 22 arbetsdagar tur & retur (multiplicerat med 2)
+                                    manadsKostnad = Math.round((numeriskDistans * KR_PER_KM) * 2 * 22).toLocaleString('sv-SE');
                                 }
 
                                 const mapsUrl = `https://google.com{encodeURIComponent(fran)}&destination=${encodeURIComponent(till)}&travelmode=driving`;
 
+                                // Alla block sparas och injiceras gemensamt så de inte försvinner
                                 document.getElementById('innehall').innerHTML = `
                                     <div class="kalkyl-grid">
                                         <div class="kalkyl-kort tid">
@@ -279,12 +372,35 @@
                                             <span class="siffra">${kostnadText}</span>
                                         </div>
                                     </div>
+
+                                    <!-- Block 1: Beskrivning -->
                                     <div class="text-block">
                                         <p>📝 ${genereradText}</p>
                                         <small class="beräknings-notis">* Kostnaden avser uppskattad ren bränslekostnad baserad på genomsnittlig förbrukning (11,50 kr/mil).</small>
                                     </div>
+
+                                    <!-- Block 2: Månadskalkylator (Nyhet) -->
+                                    <div class="text-block" style="border-left: 5px solid #1abc9c;">
+                                        <p>📊 <strong>Månadskostnad:</strong> <span style="font-weight: bold; color: #1abc9c; font-size:1.15rem;">${manadsKostnad} kr</span> / månad</p>
+                                        <p style="font-size: 0.8rem; color: var(--text-light); margin-top: 3px;">Beräknat på full pendling tur och retur i 22 arbetsdagar.</p>
+                                    </div>
+
+                                    <!-- Block 3: Ankomstväljare (Nyhet) -->
+                                    <div class="text-block" style="border-left: 5px solid var(--accent-color);">
+                                        <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 5px;">
+                                            <label style="font-weight: bold;">⏱️ När måste du vara framme?</label>
+                                            <input type="time" id="ankomst-tid" class="ankomst-input-fält" value="08:00">
+                                        </div>
+                                        <p style="margin-top: 12px; font-size: 1.05rem;">
+                                            🚗 Du bör rulla hemifrån senast: <strong id="starta-senast" style="color: #e74c3c; font-size: 1.15rem;">-</strong>
+                                        </p>
+                                    </div>
+
                                     <a href="${mapsUrl}" target="_blank" class="maps-knapp">🗺️ Starta GPS i Google Maps</a>
                                 `;
+                                
+                                // Aktivera beräkningslogiken för ankomstväljaren efter att HTML-elementen har skapats
+                                initieraAnkomstVäljare(parseInt(tid));
                                 ruttHittad = true;
                                 break;
                             }
@@ -301,6 +417,29 @@
         } else {
             document.getElementById('rubrik').innerText = "⚠️ Felaktig länk";
             document.getElementById('innehall').innerHTML = '<div class="felmeddelande">Vänligen gå tillbaka till startsidan och välj en rutt.</div>';
+        }
+
+        // Hjälpfunktion för att räkna bakåt i realtid
+        function initieraAnkomstVäljare(körtidMinuter) {
+            const tidsFält = document.getElementById('ankomst-tid');
+            if(!tidsFält) return;
+
+            function beräknaAvgång() {
+                const [timmar, minuter] = tidsFält.value.split(':').map(Number);
+                let totalaMinuter = timmar * 60 + minuter - körtidMinuter;
+                
+                if (totalaMinuter < 0) {
+                    totalaMinuter += 1440; // Om dygnet vänder bakåt
+                }
+                
+                const avgångsTimme = String(Math.floor(totalaMinuter / 60)).padStart(2, '0');
+                const avgångsMinut = String(totalaMinuter % 60).padStart(2, '0');
+                
+                document.getElementById('starta-senast').textContent = `kl. ${avgångsTimme}:${avgångsMinut}`;
+            }
+
+            tidsFält.addEventListener('input', beräknaAvgång);
+            beräknaAvgång(); // Kör kalkylen en gång direkt vid laddning
         }
     </script>
 </body>
