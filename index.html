@@ -4,7 +4,7 @@
     <meta name="google-site-verification" content="8jaeZC80v4yv1_dsSLOFhIzimUA2MLyQEDNlEBIHLf0" />
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gyllenstormś pendlingskalkylator - Tid och Avstånd</title>
+    <title>Gyllenstormś pendlingskalkylator - Tid, Avstånd och Driftkostnad</title>
     <style>
         :root {
             --bg-color: #f4f7f6;
@@ -15,6 +15,11 @@
             --text-light: #7f8c8d;
             --shadow: 0 4px 6px rgba(0,0,0,0.05);
             --radius: 8px;
+            
+            /* Intensiva färger för historiken (Från mest intensiv till svagare) */
+            --hist-1: #1abc9c; /* Senaste (Intensiv turkos) */
+            --hist-2: #2ecc71; /* Näst senaste */
+            --hist-3: #27ae60; /* Tredje senaste */
         }
 
         * {
@@ -59,7 +64,58 @@
             font-size: 0.95rem;
         }
 
-        /* Sökfältets design */
+        /* Historiksektion */
+        .historik-box {
+            margin-bottom: 25px;
+            padding: 15px;
+            background: #f8fafc;
+            border-radius: var(--radius);
+            border: 1px solid #e2e8f0;
+        }
+
+        .historik-box h3 {
+            font-size: 0.9rem;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .historik-lista {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .historik-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            border-radius: 6px;
+            color: white;
+            font-size: 0.9rem;
+            text-decoration: none;
+            font-weight: 500;
+            transition: opacity 0.2s;
+        }
+
+        .historik-item:hover {
+            opacity: 0.9;
+        }
+
+        .historik-tid {
+            font-size: 0.75rem;
+            opacity: 0.85;
+            font-weight: normal;
+        }
+
+        /* Färgintensitet baserad på ordning */
+        .historik-item.pos-0 { background-color: #2c3e50; border-left: 5px solid var(--accent-color); } /* Absolut senaste (Mörkast/Mest intensiv) */
+        .historik-item.pos-1 { background-color: #4a6572; } /* Näst senaste */
+        .historik-item.pos-2 { background-color: #708090; } /* Tredje senaste (Minst intensiv) */
+
+        /* Sökfält */
         .sök-container {
             margin-bottom: 25px;
             position: relative;
@@ -88,7 +144,7 @@
             font-size: 1rem;
         }
 
-        /* Grid-layout för rutterna */
+        /* Grid-layout */
         .rutt-grid {
             display: grid;
             grid-template-columns: 1fr;
@@ -101,7 +157,7 @@
             }
         }
 
-        /* Dynamiska block/kort */
+        /* Ruttkort */
         .rutt-kort {
             display: flex;
             align-items: center;
@@ -114,7 +170,6 @@
             transition: all 0.2s ease-in-out;
         }
 
-        /* Används för att gömma kort som inte matchar sökningen */
         .rutt-kort.hidden {
             display: none !important;
         }
@@ -179,7 +234,12 @@
             <p class="subtitle">Rutt för beräknad tid, avstånd och driftkostnad</p>
         </header>
 
-        <!-- Nytt sökfält -->
+        <!-- Sektion för Senaste aktiviteter -->
+        <div id="historik-sektion" class="historik-box" style="display: none;">
+            <h3>🕒 Senaste aktivitet</h3>
+            <div id="historik-lista" class="historik-lista"></div>
+        </div>
+
         <div class="sök-container">
             <span class="sök-ikon">🔍</span>
             <input type="text" id="sök-input" class="sök-fält" placeholder="Sök på stad eller ort (t.ex. Marstrand)...">
@@ -189,11 +249,11 @@
             <div class="laddar">Laddar Karl-Johan Gyllenstormś rutter...</div>
         </div>
         
-        <!-- Meddelande om sökningen är tom -->
         <div id="tom-sökning" class="inga-resultat hidden">Inga rutter matchar sökningen.</div>
     </div>
 
     <script>
+        // Hämta sparad csv data
         fetch('rutter.csv')
             .then(response => response.text())
             .then(data => {
@@ -210,9 +270,8 @@
 
                         let urlVänlig = `rutt.html?fran=${encodeURIComponent(start)}&till=${encodeURIComponent(mal)}`;
                         
-                        // Sparar start och mål i 'data-search' för att scriptet enkelt ska kunna söka i texten
                         gridHtml += `
-                            <a href="${urlVänlig}" class="rutt-kort" data-search="${start.toLowerCase()} ${mal.toLowerCase()}">
+                            <a href="${urlVänlig}" class="rutt-kort" data-search="${start.toLowerCase()} ${mal.toLowerCase()}" data-start="${start}" data-mal="${mal}">
                                 <div class="ikon-box">📍</div>
                                 <div class="rutt-info">
                                     <div class="rutt-titel">${start} ➔ ${mal}</div>
@@ -225,26 +284,90 @@
                 
                 document.getElementById('rutt-lista').innerHTML = gridHtml || '<div class="laddar">Inga rutter hittades.</div>';
                 
-                // Aktivera sökfunktionen efter att korten har laddats
                 initieraSökfunktion();
+                initieraKlickHistorik();
+                uppdateraHistorikVy();
             })
             .catch(err => {
                 document.getElementById('rutt-lista').innerHTML = '<div class="laddar">Kunde inte ladda rutter.</div>';
             });
 
+        // Funktion för att spara i historiken
+        function sparaTillHistorik(typ, text, url = '#') {
+            let historik = JSON.parse(localStorage.getItem('pendel_historik')) || [];
+            
+            const nu = new Date();
+            const tidsstämpel = `${nu.toLocaleDateString('sv-SE')} kl. ${nu.toLocaleTimeString('sv-SE', {hour: '2-digit', minute:'2-digit'})}`;
+            
+            // Skapa nytt objekt
+            const nyHändelse = { typ, text, url, tid: tidsstämpel, id: Date.now() };
+            
+            // Ta bort eventuell exakt dubblett av samma sökning/rutt för att undvika spam
+            historik = historik.filter(h => !(h.text === text && h.typ === typ));
+            
+            // Lägg till först i listan
+            historik.unshift(nyHändelse);
+            
+            // Spara bara de 3 senaste
+            historik = historik.slice(0, 3);
+            
+            localStorage.setItem('pendel_historik', JSON.stringify(historik));
+            uppdateraHistorikVy();
+        }
+
+        // Bygger upp HTML-strukturen för historiksektionen
+        function uppdateraHistorikVy() {
+            const historik = JSON.parse(localStorage.getItem('pendel_historik')) || [];
+            const box = document.getElementById('historik-sektion');
+            const lista = document.getElementById('historik-lista');
+            
+            if (historik.length === 0) {
+                box.style.display = 'none';
+                return;
+            }
+            
+            box.style.display = 'block';
+            lista.innerHTML = '';
+            
+            historik.forEach((h, index) => {
+                const ikon = h.typ === 'sökning' ? '🔍' : '🛣️';
+                const prefix = h.typ === 'sökning' ? 'Sökte efter: ' : 'Klickade: ';
+                
+                // Skapar elementet, tilldelar klass baserat på index (pos-0 är mörkast)
+                const item = document.createElement('a');
+                item.href = h.url;
+                item.className = `historik-item pos-${index}`;
+                
+                // Om det bara är en sökning förhindrar vi länk-hopp
+                if(h.url === '#') {
+                    item.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const sökFält = document.getElementById('sök-input');
+                        sökFält.value = h.text;
+                        sökFält.dispatchEvent(new Event('input'));
+                    });
+                }
+
+                item.innerHTML = `
+                    <span>${ikon} <strong>${prefix}</strong> "${h.text}"</span>
+                    <span class="historik-tid">${h.tid}</span>
+                `;
+                lista.appendChild(item);
+            });
+        }
+
         function initieraSökfunktion() {
             const sökInput = document.getElementById('sök-input');
             const kort = document.querySelectorAll('.rutt-kort');
             const tomMeddelande = document.getElementById('tom-sökning');
+            let sökTimeout;
 
             sökInput.addEventListener('input', function() {
                 const sökOrd = this.value.toLowerCase().trim();
                 let synligaKort = 0;
 
                 kort.forEach(r => {
-                    // Hämtar sparad text (både start och mål) från kortet
                     const sökText = r.getAttribute('data-search');
-                    
                     if (sökText.includes(sökOrd)) {
                         r.classList.remove('hidden');
                         synligaKort++;
@@ -253,12 +376,31 @@
                     }
                 });
 
-                // Visa ett textmeddelande om sökningen inte ger några träffar alls
                 if (synligaKort === 0 && sökOrd !== '') {
                     tomMeddelande.classList.remove('hidden');
                 } else {
                     tomMeddelande.classList.add('hidden');
                 }
+
+                // Spara sökningen till historiken först när man slutat skriva (efter 1 sekund)
+                clearTimeout(sökTimeout);
+                if (sökOrd.length >= 2) {
+                    sökTimeout = setTimeout(() => {
+                        sparaTillHistorik('sökning', sökInput.value.trim());
+                    }, 1000);
+                }
+            });
+        }
+
+        function initieraKlickHistorik() {
+            const kort = document.querySelectorAll('.rutt-kort');
+            kort.forEach(k => {
+                k.addEventListener('click', function() {
+                    const start = this.getAttribute('data-start');
+                    const mal = this.getAttribute('data-mal');
+                    const url = this.getAttribute('href');
+                    sparaTillHistorik('rutt', `${start} till ${mal}`, url);
+                });
             });
         }
     </script>
