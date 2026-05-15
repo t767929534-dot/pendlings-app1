@@ -4,13 +4,13 @@
     <meta name="google-site-verification" content="8jaeZC80v4yv1_dsSLOFhIzimUA2MLyQEDNlEBIHLf0" />
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gyllenstormś pendlingskalkylator - Tid, Avstånd & Driftkostnad</title>
+    <title>Gyllenstormś pendlingskalkylator - Tid och Avstånd</title>
     <style>
         :root {
             --bg-color: #f4f7f6;
             --card-bg: #ffffff;
             --primary-color: #2c3e50;
-            --accent-color: #d4af37; /* Gyllen-ton */
+            --accent-color: #d4af37;
             --text-color: #333333;
             --text-light: #7f8c8d;
             --shadow: 0 4px 6px rgba(0,0,0,0.05);
@@ -43,7 +43,7 @@
 
         header {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
             border-bottom: 2px solid #eee;
             padding-bottom: 20px;
         }
@@ -59,6 +59,35 @@
             font-size: 0.95rem;
         }
 
+        /* Sökfältets design */
+        .sök-container {
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        .sök-fält {
+            width: 100%;
+            padding: 12px 15px 12px 40px;
+            font-size: 1rem;
+            border: 2px solid #e1e8ed;
+            border-radius: var(--radius);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .sök-fält:focus {
+            border-color: var(--primary-color);
+        }
+
+        .sök-ikon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-light);
+            font-size: 1rem;
+        }
+
         /* Grid-layout för rutterna */
         .rutt-grid {
             display: grid;
@@ -72,7 +101,7 @@
             }
         }
 
-        /* Dynamiska block/kort för varje rutt */
+        /* Dynamiska block/kort */
         .rutt-kort {
             display: flex;
             align-items: center;
@@ -85,6 +114,11 @@
             transition: all 0.2s ease-in-out;
         }
 
+        /* Används för att gömma kort som inte matchar sökningen */
+        .rutt-kort.hidden {
+            display: none !important;
+        }
+
         .rutt-kort:hover {
             transform: translateY(-2px);
             border-color: var(--accent-color);
@@ -92,7 +126,6 @@
             background: #fff;
         }
 
-        /* Symboler inuti blocken */
         .ikon-box {
             font-size: 1.5rem;
             margin-right: 15px;
@@ -125,11 +158,16 @@
             margin-top: 2px;
         }
 
-        .laddar {
+        .laddar, .inga-resultat {
             text-align: center;
             color: var(--text-light);
             font-style: italic;
             padding: 20px;
+            grid-column: 1 / -1;
+        }
+
+        .inga-resultat.hidden {
+            display: none;
         }
     </style>
 </head>
@@ -138,13 +176,21 @@
     <div class="container">
         <header>
             <h1>🚗 Gyllenstormś Pendlingskalkylator</h1>
-            <p class="subtitle">Rutt med beräknad tid, avstånd och driftkostnad</p>
+            <p class="subtitle">Rutt för beräknad tid, avstånd och driftkostnad</p>
         </header>
 
-        <!-- Ändrad från punktlista till en responsiv grid-layout -->
+        <!-- Nytt sökfält -->
+        <div class="sök-container">
+            <span class="sök-ikon">🔍</span>
+            <input type="text" id="sök-input" class="sök-fält" placeholder="Sök på stad eller ort (t.ex. Marstrand)...">
+        </div>
+
         <div id="rutt-lista" class="rutt-grid">
             <div class="laddar">Laddar Karl-Johan Gyllenstormś rutter...</div>
         </div>
+        
+        <!-- Meddelande om sökningen är tom -->
+        <div id="tom-sökning" class="inga-resultat hidden">Inga rutter matchar sökningen.</div>
     </div>
 
     <script>
@@ -160,14 +206,13 @@
                         let start = kolumner[0].trim();
                         let mal = kolumner[1].trim();
                         
-                        // Hoppa över tomma rader
                         if(!start || !mal) return;
 
                         let urlVänlig = `rutt.html?fran=${encodeURIComponent(start)}&till=${encodeURIComponent(mal)}`;
                         
-                        // Genererar ett visuellt block (kort) med symboler istället för en länktext
+                        // Sparar start och mål i 'data-search' för att scriptet enkelt ska kunna söka i texten
                         gridHtml += `
-                            <a href="${urlVänlig}" class="rutt-kort">
+                            <a href="${urlVänlig}" class="rutt-kort" data-search="${start.toLowerCase()} ${mal.toLowerCase()}">
                                 <div class="ikon-box">📍</div>
                                 <div class="rutt-info">
                                     <div class="rutt-titel">${start} ➔ ${mal}</div>
@@ -179,10 +224,43 @@
                 });
                 
                 document.getElementById('rutt-lista').innerHTML = gridHtml || '<div class="laddar">Inga rutter hittades.</div>';
+                
+                // Aktivera sökfunktionen efter att korten har laddats
+                initieraSökfunktion();
             })
             .catch(err => {
                 document.getElementById('rutt-lista').innerHTML = '<div class="laddar">Kunde inte ladda rutter.</div>';
             });
+
+        function initieraSökfunktion() {
+            const sökInput = document.getElementById('sök-input');
+            const kort = document.querySelectorAll('.rutt-kort');
+            const tomMeddelande = document.getElementById('tom-sökning');
+
+            sökInput.addEventListener('input', function() {
+                const sökOrd = this.value.toLowerCase().trim();
+                let synligaKort = 0;
+
+                kort.forEach(r => {
+                    // Hämtar sparad text (både start och mål) från kortet
+                    const sökText = r.getAttribute('data-search');
+                    
+                    if (sökText.includes(sökOrd)) {
+                        r.classList.remove('hidden');
+                        synligaKort++;
+                    } else {
+                        r.classList.add('hidden');
+                    }
+                });
+
+                // Visa ett textmeddelande om sökningen inte ger några träffar alls
+                if (synligaKort === 0 && sökOrd !== '') {
+                    tomMeddelande.classList.remove('hidden');
+                } else {
+                    tomMeddelande.classList.add('hidden');
+                }
+            });
+        }
     </script>
 </body>
 </html>
