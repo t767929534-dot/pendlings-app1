@@ -329,7 +329,7 @@
             fetch('rutter.csv')
                 .then(response => response.text())
                 .then(data => {
-                    let rader = data.split(/\r?\n/); // Hanterar säkra radbrytningar
+                    let rader = data.split(/\r?\n/); // Säkrad radbrytning
                     let ruttHittad = false;
 
                     for (let i = 1; i < rader.length; i++) {
@@ -352,12 +352,8 @@
                                     manadsKostnad = Math.round((numeriskDistans * KR_PER_KM) * 2 * 22).toLocaleString('sv-SE');
                                 }
 
-                                // SÄKER METOD: Här bygger vi länken rad för rad utan dolda krockar
-                                let mapsUrl = "https://google.com";
-                                mapsUrl += encodeURIComponent(fran);
-                                mapsUrl += "&destination=";
-                                mapsUrl += encodeURIComponent(till);
-                                mapsUrl += "&travelmode=driving";
+                                // Robust sammankoppling av Google Maps-länken för att undvika domänkrockar
+                                var mapsUrl = "https://google.com" + encodeURIComponent(fran) + "&destination=" + encodeURIComponent(till) + "&travelmode=driving";
 
                                 // Alla block injiceras gemensamt
                                 document.getElementById('innehall').innerHTML = `
