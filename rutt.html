@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="sidtitel">Pendla med Bil - Tid, Avstånd och Driftkostnad</title>
+    <title id="sidtitel">Rutt - Tid, Avstånd och Driftkostnad</title>
     <style>
         :root {
             --bg-color: #f4f7f6;
@@ -14,7 +14,7 @@
             --text-light: #7f8c8d;
             --shadow: 0 4px 6px rgba(0,0,0,0.05);
             --radius: 8px;
-            --intensiv-färg: #2c3e50; /* Matchar den intensiva färgen från index-historiken */
+            --intensiv-färg: #2c3e50;
         }
 
         * {
@@ -41,6 +41,14 @@
             border-top: 5px solid var(--accent-color);
         }
 
+        /* Navigeringsrad högst upp */
+        .nav-rad {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
         .tillbaka-länk {
             display: inline-flex;
             align-items: center;
@@ -48,12 +56,30 @@
             color: var(--text-light);
             text-decoration: none;
             font-size: 0.9rem;
-            margin-bottom: 25px;
             transition: color 0.2s;
         }
 
         .tillbaka-länk:hover {
             color: var(--primary-color);
+        }
+
+        .dela-knapp {
+            background: none;
+            border: 1px solid #e1e8ed;
+            padding: 6px 12px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 0.85rem;
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s;
+        }
+
+        .dela-knapp:hover {
+            background: #fafbfc;
+            border-color: var(--text-light);
         }
 
         header {
@@ -78,7 +104,7 @@
 
         @media (min-width: 480px) {
             .kalkyl-grid {
-                grid-template-columns: repeat(2, 1fr);
+                grid-template-columns: repeat(3, 1fr); /* Ändrat till 3 kolumner */
             }
         }
 
@@ -100,6 +126,10 @@
             background-color: #4a6572;
         }
 
+        .kalkyl-kort.kostnad {
+            background-color: #1abc9c; /* Intensiv turkos för kostnadsfokus */
+        }
+
         .kalkyl-kort .etikett {
             display: block;
             font-size: 0.85rem;
@@ -110,7 +140,7 @@
         }
 
         .kalkyl-kort .siffra {
-            font-size: 1.8rem;
+            font-size: 1.6rem;
             font-weight: bold;
         }
 
@@ -123,11 +153,29 @@
             font-size: 1.05rem;
             line-height: 1.6;
             color: var(--text-color);
-            margin-bottom: 20px;
+            margin-bottom: 25px;
         }
 
-        .text-block p {
-            position: relative;
+        /* Google Maps-knapp */
+        .maps-knapp {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: var(--primary-color);
+            color: white;
+            text-decoration: none;
+            padding: 14px;
+            border-radius: var(--radius);
+            font-weight: 600;
+            text-align: center;
+            box-shadow: var(--shadow);
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        .maps-knapp:hover {
+            background: #1a252f;
+            transform: translateY(-1px);
         }
 
         .laddar, .felmeddelande {
@@ -146,7 +194,10 @@
 <body>
 
     <div class="container">
-        <a href="index.html" class="tillbaka-länk">⬅️ Tillbaka till start</a>
+        <div class="nav-rad">
+            <a href="index.html" class="tillbaka-länk">⬅️ Tillbaka till start</a>
+            <button id="dela-btn" class="dela-knapp" style="display: none;">🔗 Dela rutt</button>
+        </div>
         
         <header>
             <h1 id="rubrik">Laddar ruttinformation...</h1>
@@ -162,9 +213,23 @@
         const fran = urlParams.get('fran');
         const till = urlParams.get('till');
 
+        // Prisinställning för drivmedelskalkyl (t.ex. 18 kr per mil / 1.8 kr per km)
+        const KR_PER_KM = 1.8; 
+
         if (fran && till) {
             document.getElementById('sidtitel').innerText = `Pendla från ${fran} till ${till} - Tid, avstånd och kostnad`;
             document.getElementById('rubrik').innerText = `📍 ${fran} ➔ ${till}`;
+            
+            // Visa delningsknappen om ruttparametrar finns
+            const delaBtn = document.getElementById('dela-btn');
+            delaBtn.style.display = 'flex';
+            delaBtn.addEventListener('click', () => {
+                navigator.clipboard.writeText(window.location.href)
+                    .then(() => {
+                        delaBtn.innerText = '✅ Länk kopierad!';
+                        setTimeout(() => delaBtn.innerHTML = '🔗 Dela rutt', 2000);
+                    });
+            });
 
             fetch('rutter.csv')
                 .then(response => response.text())
@@ -182,7 +247,18 @@
                             let genereradText = kolumner[4].replace(/"/g, '').trim();
 
                             if (csvFran.toLowerCase() === fran.toLowerCase() && csvTill.toLowerCase() === till.toLowerCase()) {
-                                // Renderar data i färgkodade block och textrutor
+                                
+                                // Räkna ut uppskattad drivmedelskostnad baserat på distansen
+                                const numeriskDistans = parseFloat(distans.replace(/[^\d.]/g, ''));
+                                let kostnadText = "-";
+                                if (!isNaN(numeriskDistans)) {
+                                    kostnadText = Math.round(numeriskDistans * KR_PER_KM) + " kr";
+                                }
+
+                                // Skapa Google Maps URL dynamiskt
+                                const mapsUrl = `https://google.com{encodeURIComponent(fran)}&destination=${encodeURIComponent(till)}&travelmode=driving`;
+
+                                // Renderar det nya 3-kolumns-systemet samt Google Maps-knappen i botten
                                 document.getElementById('innehall').innerHTML = `
                                     <div class="kalkyl-grid">
                                         <div class="kalkyl-kort tid">
@@ -193,10 +269,15 @@
                                             <span class="etikett">📏 Distans</span>
                                             <span class="siffra">${distans} km</span>
                                         </div>
+                                        <div class="kalkyl-kort kostnad">
+                                            <span class="etikett">💰 Kostnad</span>
+                                            <span class="siffra">${kostnadText}</span>
+                                        </div>
                                     </div>
                                     <div class="text-block">
                                         <p>📝 ${genereradText}</p>
                                     </div>
+                                    <a href="${mapsUrl}" target="_blank" class="maps-knapp">🗺️ Starta GPS i Google Maps</a>
                                 `;
                                 ruttHittad = true;
                                 break;
