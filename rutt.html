@@ -1,11 +1,9 @@
 <!DOCTYPE html>
 <html lang="sv">
 <head>
-    <meta name="description" content="Gyllenstormś beräkning av pendlingstid, avstånd och bränslekostnad för rutt med bil.">
-<meta name="robots" content="index, follow">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="sidtitel">Pendla - Tid, Avstånd och Driftkostnad.</title>
+    <title id="sidtitel">Pendla - Tid och Avstånd</title>
     <style>
         :root {
             --bg-color: #f4f7f6;
@@ -285,7 +283,7 @@
         </div>
         
         <header>
-            <h1 id="rubrik">Laddar Gyllenstormś ruttinformation...</h1>
+            <h1 id="rubrik">Laddar ruttinformation...</h1>
         </header>
         
         <div id="innehall">
@@ -331,7 +329,7 @@
             fetch('rutter.csv')
                 .then(response => response.text())
                 .then(data => {
-                    let rader = data.split(/\r?\n/);
+                    let rader = data.split(/\r?\n/); // Hanterar säkra radbrytningar
                     let ruttHittad = false;
 
                     for (let i = 1; i < rader.length; i++) {
@@ -350,15 +348,18 @@
                                 let manadsKostnad = "-";
 
                                 if (!isNaN(numeriskDistans)) {
-                                    // Enkel resa bränsle
                                     kostnadText = Math.round(numeriskDistans * KR_PER_KM) + " kr";
-                                    // 22 arbetsdagar tur & retur (multiplicerat med 2)
                                     manadsKostnad = Math.round((numeriskDistans * KR_PER_KM) * 2 * 22).toLocaleString('sv-SE');
                                 }
 
-                                const mapsUrl = `https://google.com{encodeURIComponent(fran)}&destination=${encodeURIComponent(till)}&travelmode=driving`;
+                                // SÄKER METOD: Här bygger vi länken rad för rad utan dolda krockar
+                                let mapsUrl = "https://google.com";
+                                mapsUrl += encodeURIComponent(fran);
+                                mapsUrl += "&destination=";
+                                mapsUrl += encodeURIComponent(till);
+                                mapsUrl += "&travelmode=driving";
 
-                                // Alla block sparas och injiceras gemensamt så de inte försvinner
+                                // Alla block injiceras gemensamt
                                 document.getElementById('innehall').innerHTML = `
                                     <div class="kalkyl-grid">
                                         <div class="kalkyl-kort tid">
@@ -381,13 +382,13 @@
                                         <small class="beräknings-notis">* Kostnaden avser uppskattad ren bränslekostnad baserad på genomsnittlig förbrukning (11,50 kr/mil).</small>
                                     </div>
 
-                                    <!-- Block 2: Månadskalkylator (Nyhet) -->
+                                    <!-- Block 2: Månadskalkylator -->
                                     <div class="text-block" style="border-left: 5px solid #1abc9c;">
                                         <p>📊 <strong>Månadskostnad:</strong> <span style="font-weight: bold; color: #1abc9c; font-size:1.15rem;">${manadsKostnad} kr</span> / månad</p>
                                         <p style="font-size: 0.8rem; color: var(--text-light); margin-top: 3px;">Beräknat på full pendling tur och retur i 22 arbetsdagar.</p>
                                     </div>
 
-                                    <!-- Block 3: Ankomstväljare (Nyhet) -->
+                                    <!-- Block 3: Ankomstväljare -->
                                     <div class="text-block" style="border-left: 5px solid var(--accent-color);">
                                         <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 5px;">
                                             <label style="font-weight: bold;">⏱️ När måste du vara framme?</label>
@@ -401,7 +402,6 @@
                                     <a href="${mapsUrl}" target="_blank" class="maps-knapp">🗺️ Starta GPS i Google Maps</a>
                                 `;
                                 
-                                // Aktivera beräkningslogiken för ankomstväljaren efter att HTML-elementen har skapats
                                 initieraAnkomstVäljare(parseInt(tid));
                                 ruttHittad = true;
                                 break;
@@ -421,7 +421,6 @@
             document.getElementById('innehall').innerHTML = '<div class="felmeddelande">Vänligen gå tillbaka till startsidan och välj en rutt.</div>';
         }
 
-        // Hjälpfunktion för att räkna bakåt i realtid
         function initieraAnkomstVäljare(körtidMinuter) {
             const tidsFält = document.getElementById('ankomst-tid');
             if(!tidsFält) return;
@@ -431,7 +430,7 @@
                 let totalaMinuter = timmar * 60 + minuter - körtidMinuter;
                 
                 if (totalaMinuter < 0) {
-                    totalaMinuter += 1440; // Om dygnet vänder bakåt
+                    totalaMinuter += 1440;
                 }
                 
                 const avgångsTimme = String(Math.floor(totalaMinuter / 60)).padStart(2, '0');
@@ -441,7 +440,7 @@
             }
 
             tidsFält.addEventListener('input', beräknaAvgång);
-            beräknaAvgång(); // Kör kalkylen en gång direkt vid laddning
+            beräknaAvgång();
         }
     </script>
 </body>
