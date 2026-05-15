@@ -301,7 +301,7 @@
         fetch('rutter.csv')
             .then(response => response.text())
             .then(data => {
-                let rader = data.split('\n').slice(1);
+                let rader = data.split(/\r?\n/).slice(1);
                 let gridHtml = '';
                 
                 rader.forEach(rad => {
