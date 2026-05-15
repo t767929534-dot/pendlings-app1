@@ -4,7 +4,7 @@
     <meta name="google-site-verification" content="8jaeZC80v4yv1_dsSLOFhIzimUA2MLyQEDNlEBIHLf0" />
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gyllenstormś pendlingskalkylator - Tid, Avstånd och Driftkostnad</title>
+    <title>Gyllenstormś pendlingskalkylator - Tid och Avstånd</title>
     <style>
         :root {
             --bg-color: #f4f7f6;
@@ -15,11 +15,22 @@
             --text-light: #7f8c8d;
             --shadow: 0 4px 6px rgba(0,0,0,0.05);
             --radius: 8px;
-            
-            /* Intensiva färger för historiken (Från mest intensiv till svagare) */
-            --hist-1: #1abc9c; /* Senaste (Intensiv turkos) */
-            --hist-2: #2ecc71; /* Näst senaste */
-            --hist-3: #27ae60; /* Tredje senaste */
+            --block-bg: #fafbfc;
+            --border-color: #e1e8ed;
+            --ikon-bg: #edf2f7;
+        }
+
+        /* Dark Mode-klasser */
+        body.dark-theme {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --primary-color: #e0e0e0;
+            --text-color: #f5f5f5;
+            --text-light: #a0a0a0;
+            --block-bg: #262626;
+            --border-color: #333333;
+            --ikon-bg: #2d2d2d;
+            --shadow: 0 4px 6px rgba(0,0,0,0.3);
         }
 
         * {
@@ -34,6 +45,7 @@
             color: var(--text-color);
             line-height: 1.6;
             padding: 20px;
+            transition: background-color 0.3s, color 0.3s;
         }
 
         .container {
@@ -44,12 +56,13 @@
             border-radius: var(--radius);
             box-shadow: var(--shadow);
             border-top: 5px solid var(--accent-color);
+            transition: background-color 0.3s, box-shadow 0.3s;
         }
 
         header {
             text-align: center;
             margin-bottom: 25px;
-            border-bottom: 2px solid #eee;
+            border-bottom: 2px solid var(--border-color);
             padding-bottom: 20px;
         }
 
@@ -64,13 +77,12 @@
             font-size: 0.95rem;
         }
 
-        /* Historiksektion */
         .historik-box {
             margin-bottom: 25px;
             padding: 15px;
-            background: #f8fafc;
+            background: var(--block-bg);
             border-radius: var(--radius);
-            border: 1px solid #e2e8f0;
+            border: 1px solid var(--border-color);
         }
 
         .historik-box h3 {
@@ -110,12 +122,10 @@
             font-weight: normal;
         }
 
-        /* Färgintensitet baserad på ordning */
-        .historik-item.pos-0 { background-color: #2c3e50; border-left: 5px solid var(--accent-color); } /* Absolut senaste (Mörkast/Mest intensiv) */
-        .historik-item.pos-1 { background-color: #4a6572; } /* Näst senaste */
-        .historik-item.pos-2 { background-color: #708090; } /* Tredje senaste (Minst intensiv) */
+        .historik-item.pos-0 { background-color: #2c3e50; border-left: 5px solid var(--accent-color); }
+        .historik-item.pos-1 { background-color: #4a6572; }
+        .historik-item.pos-2 { background-color: #708090; }
 
-        /* Sökfält */
         .sök-container {
             margin-bottom: 25px;
             position: relative;
@@ -125,7 +135,9 @@
             width: 100%;
             padding: 12px 15px 12px 40px;
             font-size: 1rem;
-            border: 2px solid #e1e8ed;
+            border: 2px solid var(--border-color);
+            background: var(--card-bg);
+            color: var(--text-color);
             border-radius: var(--radius);
             outline: none;
             transition: border-color 0.2s;
@@ -144,7 +156,6 @@
             font-size: 1rem;
         }
 
-        /* Grid-layout */
         .rutt-grid {
             display: grid;
             grid-template-columns: 1fr;
@@ -157,12 +168,11 @@
             }
         }
 
-        /* Ruttkort */
         .rutt-kort {
             display: flex;
             align-items: center;
-            background: #fafbfc;
-            border: 1px solid #e1e8ed;
+            background: var(--block-bg);
+            border: 1px solid var(--border-color);
             border-radius: var(--radius);
             padding: 15px;
             text-decoration: none;
@@ -178,13 +188,13 @@
             transform: translateY(-2px);
             border-color: var(--accent-color);
             box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            background: #fff;
+            background: var(--card-bg);
         }
 
         .ikon-box {
             font-size: 1.5rem;
             margin-right: 15px;
-            background: #edf2f7;
+            background: var(--ikon-bg);
             padding: 10px;
             border-radius: 50%;
             display: flex;
@@ -224,17 +234,42 @@
         .inga-resultat.hidden {
             display: none;
         }
+
+        /* Flytande Dark Mode-Knapp */
+        .darkmode-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--primary-color);
+            color: var(--card-bg);
+            border: none;
+            padding: 12px;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            transition: transform 0.1s;
+        }
+
+        .darkmode-btn:active {
+            transform: scale(0.9);
+        }
     </style>
 </head>
 <body>
 
+    <button id="darkmode-toggle" class="darkmode-btn" title="Växla nattläge">🌓</button>
+
     <div class="container">
         <header>
             <h1>🚗 Gyllenstormś Pendlingskalkylator</h1>
-            <p class="subtitle">Min rutt för beräknad tid, avstånd och driftkostnad.</p>
+            <p class="subtitle">Välj en rutt för att beräkna tid och avstånd</p>
         </header>
 
-        <!-- Sektion för Senaste aktiviteter -->
         <div id="historik-sektion" class="historik-box" style="display: none;">
             <h3>🕒 Senaste aktivitet</h3>
             <div id="historik-lista" class="historik-lista"></div>
@@ -242,18 +277,27 @@
 
         <div class="sök-container">
             <span class="sök-ikon">🔍</span>
-            <input type="text" id="sök-input" class="sök-fält" placeholder="Sök på stad eller ort (t.ex. Marstrand)...">
+            <input type="text" id="sök-input" class="sök-fält" placeholder="Sök på stad eller ort (t.ex. Helsingborg)...">
         </div>
 
         <div id="rutt-lista" class="rutt-grid">
             <div class="laddar">Laddar Karl-Johan Gyllenstormś rutter...</div>
         </div>
         
-        <div id="tom-sökning" class="inga-resultat hidden">Inga rutter matchar sökningen.</div>
+        <div id="tom-sökning" class="inga-resultat hidden">Inga rutter matchar din sökning.</div>
     </div>
 
     <script>
-        // Hämta sparad csv data
+        // Initiera mörkt läge baserat på sparad inställning
+        if (localStorage.getItem('mörkt_tema') === 'true') {
+            document.body.classList.add('dark-theme');
+        }
+
+        document.getElementById('darkmode-toggle').addEventListener('click', () => {
+            document.body.classList.toggle('dark-theme');
+            localStorage.setItem('mörkt_tema', document.body.classList.contains('dark-theme'));
+        });
+
         fetch('rutter.csv')
             .then(response => response.text())
             .then(data => {
@@ -265,7 +309,6 @@
                     if(kolumner.length >= 2) {
                         let start = kolumner[0].trim();
                         let mal = kolumner[1].trim();
-                        
                         if(!start || !mal) return;
 
                         let urlVänlig = `rutt.html?fran=${encodeURIComponent(start)}&till=${encodeURIComponent(mal)}`;
@@ -292,30 +335,20 @@
                 document.getElementById('rutt-lista').innerHTML = '<div class="laddar">Kunde inte ladda rutter.</div>';
             });
 
-        // Funktion för att spara i historiken
         function sparaTillHistorik(typ, text, url = '#') {
             let historik = JSON.parse(localStorage.getItem('pendel_historik')) || [];
-            
             const nu = new Date();
             const tidsstämpel = `${nu.toLocaleDateString('sv-SE')} kl. ${nu.toLocaleTimeString('sv-SE', {hour: '2-digit', minute:'2-digit'})}`;
             
-            // Skapa nytt objekt
             const nyHändelse = { typ, text, url, tid: tidsstämpel, id: Date.now() };
-            
-            // Ta bort eventuell exakt dubblett av samma sökning/rutt för att undvika spam
             historik = historik.filter(h => !(h.text === text && h.typ === typ));
-            
-            // Lägg till först i listan
             historik.unshift(nyHändelse);
-            
-            // Spara bara de 3 senaste
             historik = historik.slice(0, 3);
             
             localStorage.setItem('pendel_historik', JSON.stringify(historik));
             uppdateraHistorikVy();
         }
 
-        // Bygger upp HTML-strukturen för historiksektionen
         function uppdateraHistorikVy() {
             const historik = JSON.parse(localStorage.getItem('pendel_historik')) || [];
             const box = document.getElementById('historik-sektion');
@@ -333,12 +366,10 @@
                 const ikon = h.typ === 'sökning' ? '🔍' : '🛣️';
                 const prefix = h.typ === 'sökning' ? 'Sökte efter: ' : 'Klickade: ';
                 
-                // Skapar elementet, tilldelar klass baserat på index (pos-0 är mörkast)
                 const item = document.createElement('a');
                 item.href = h.url;
                 item.className = `historik-item pos-${index}`;
                 
-                // Om det bara är en sökning förhindrar vi länk-hopp
                 if(h.url === '#') {
                     item.addEventListener('click', (e) => {
                         e.preventDefault();
@@ -382,7 +413,6 @@
                     tomMeddelande.classList.add('hidden');
                 }
 
-                // Spara sökningen till historiken först när man slutat skriva (efter 1 sekund)
                 clearTimeout(sökTimeout);
                 if (sökOrd.length >= 2) {
                     sökTimeout = setTimeout(() => {
