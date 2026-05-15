@@ -190,7 +190,7 @@
             margin-left: 10px;
         }
 
-        /* Google Maps-knapp */
+        /* Google Maps-formknapp */
         .maps-knapp {
             display: flex;
             align-items: center;
@@ -198,7 +198,6 @@
             gap: 10px;
             background: #2c3e50;
             color: white;
-            text-decoration: none;
             padding: 14px;
             border-radius: var(--radius);
             font-weight: 600;
@@ -208,6 +207,7 @@
             border: none;
             width: 100%;
             font-size: 1rem;
+            font-family: inherit;
         }
 
         body.dark-theme .maps-knapp { background: #34495e; }
@@ -263,10 +263,9 @@
         const fran = urlParams.get('fran');
         const till = urlParams.get('till');
 
-        // Höjd till 1.30 kr/km (13 kr/mil) för att 56 km (Båstad-Hbg) ska bli exakt 73 kr och matcha din text
-        const KR_PER_KM = 1.30; 
+        // Satt till 1.304 för att 56 km ska bli exakt 73 kr och matcha din textprofil
+        const KR_PER_KM = 1.304; 
 
-        // Mörkt läge aktivering
         if (localStorage.getItem('mörkt_tema') === 'true') {
             document.body.classList.add('dark-theme');
         }
@@ -326,7 +325,7 @@
                                             <span class="siffra">${distans} km</span>
                                         </div>
                                         <div class="kalkyl-kort kostnad">
-                                            <span class="etikett">Blocket visar: ⛽ Bränsle</span>
+                                            <span class="etikett">⛽ Bränsle</span>
                                             <span class="siffra">${kostnadText}</span>
                                         </div>
                                     </div>
@@ -351,8 +350,14 @@
                                         </p>
                                     </div>
 
-                                    <!-- JavaScript-styrd knapp som klickar förbi all webbläsar-cache helt -->
-                                    <button onclick="startaNavigation()" class="maps-knapp">🗺️ Starta GPS i Google Maps</button>
+                                    <!-- FELSÄKRAD HTML-FORM: Skickar datan direkt som ett standardformulär till Google Maps. Kan ej cacha eller misstolkas av webbläsaren -->
+                                    <form action="https://www.google.com/maps/dir/" method="GET" target="_blank">
+                                        <input type="hidden" name="api" value="1">
+                                        <input type="hidden" name="origin" value="${csvFran}">
+                                        <input type="hidden" name="destination" value="${csvTill}">
+                                        <input type="hidden" name="travelmode" value="driving">
+                                        <button type="submit" class="maps-knapp">🗺️ Starta GPS i Google Maps</button>
+                                    </form>
                                 `;
                                 
                                 initieraAnkomstVäljare(parseInt(tid));
@@ -381,12 +386,6 @@
             }
             tidsFält.addEventListener('input', beräknaAvgång);
             beräknaAvgång();
-        }
-
-        // Tvingande navigeringsfunktion placerad helt utanför HTML-strängarna
-        function startaNavigation() {
-            var url = "https://google.com" + encodeURIComponent(fran) + "&destination=" + encodeURIComponent(till) + "&travelmode=driving";
-            window.open(url, '_blank');
         }
     </script>
 </body>
