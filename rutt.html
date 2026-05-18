@@ -256,11 +256,12 @@
         const fran = urlParams.get('fran');
         const till = urlParams.get('till');
 
-        const KR_PER_KM = 1.304; 
+        // INSTÄLLNINGAR FÖR BERÄKNING
+        const KR_PER_KM = 1.304; // Din uppskattade bränslekostnad per km
         const ARBETSDAGAR_PER_AR = 225;
-        const AVDRAG_PER_KM = 1.2; // 25 kr per mil
-        const SJÄLVRISK = 11000;
-        const SKATTEREDUKTION = 0.30; // 30% effekt av avdraget
+        const AVDRAG_PER_KM = 2.5; // Skatteverkets 25 kr per mil (2.5 kr/km)
+        const SJÄLVRISK = 11000; // Beloppet man måste komma över för att få avdrag
+        const SKATT_EFFEKT = 0.30; // 30% av avdraget blir faktisk peng tillbaka på skatten
 
         if (localStorage.getItem('mörkt_tema') === 'true') {
             document.body.classList.add('dark-theme');
@@ -296,17 +297,21 @@
                                 
                                 const km = parseFloat(distansStr.replace(/[^\d.]/g, ''));
                                 
-                                // Beräkningar
+                                // Grundberäkningar kostnad (Tur och retur)
+                                const dagligDistans = km * 2;
                                 const kostnadEnkel = km * KR_PER_KM;
                                 const manadsKostnad = Math.round(kostnadEnkel * 2 * 22);
                                 const arsKostnadBrutto = Math.round(kostnadEnkel * 2 * ARBETSDAGAR_PER_AR);
                                 
-                                // Skatteavdrag
-                                const totaltAvdrag = (km * 2 * ARBETSDAGAR_PER_AR * AVDRAG_PER_KM);
+                                // Skatteavdrag logik enligt Skatteverket
+                                const totaltAvdragsUnderlag = Math.round(dagligDistans * ARBETSDAGAR_PER_AR * AVDRAG_PER_KM);
                                 let skatteLättnad = 0;
-                                if (totaltAvdrag > SJÄLVRISK) {
-                                    skatteLättnad = Math.round((totaltAvdrag - SJÄLVRISK) * SKATTEREDUKTION);
+                                
+                                if (totaltAvdragsUnderlag > SJÄLVRISK) {
+                                    // Man får göra avdrag för det som överstiger 11 000 kr
+                                    skatteLättnad = Math.round((totaltAvdragsUnderlag - SJÄLVRISK) * SKATT_EFFEKT);
                                 }
+                                
                                 const nettoArsKostnad = arsKostnadBrutto - skatteLättnad;
 
                                 document.getElementById('innehall').innerHTML = `
@@ -330,14 +335,14 @@
                                     </div>
 
                                     <div class="text-block" style="border-left: 5px solid var(--success-color);">
-                                        <p style="margin-bottom: 10px;">📊 <strong>Ekonomisk Kalkyl</strong></p>
-                                        <div class="rad-ekonomi"><span>Månadskostnad (22 dgr):</span> <strong>${manadsKostnad.toLocaleString('sv-SE')} kr</strong></div>
-                                        <div class="rad-ekonomi"><span>Årskostnad (Brutto):</span> <strong>${arsKostnadBrutto.toLocaleString('sv-SE')} kr</strong></div>
+                                        <p style="margin-bottom: 10px;">📊 <strong>Ekonomisk Kalkyl (Bil)</strong></p>
+                                        <div class="rad-ekonomi"><span>Månadskostnad (ca 22 dgr):</span> <strong>${manadsKostnad.toLocaleString('sv-SE')} kr</strong></div>
+                                        <div class="rad-ekonomi"><span>Årskostnad (Bränsle):</span> <strong>${arsKostnadBrutto.toLocaleString('sv-SE')} kr</strong></div>
                                         <hr style="margin: 10px 0; border: 0; border-top: 1px solid #eee;">
-                                        <div class="rad-ekonomi" style="color: #27ae60;"><span>Uppskattat skatteavdrag:</span> <strong>- ${skatteLättnad.toLocaleString('sv-SE')} kr/år</strong></div>
-                                        <div class="rad-ekonomi" style="font-weight: bold; margin-top: 5px;"><span>Netto årskostnad:</span> <span>${nettoArsKostnad.toLocaleString('sv-SE')} kr</span></div>
+                                        <div class="rad-ekonomi" style="color: #27ae60;"><span>Uppskattad skattereduktion:</span> <strong>- ${skatteLättnad.toLocaleString('sv-SE')} kr/år</strong></div>
+                                        <div class="rad-ekonomi" style="font-weight: bold; margin-top: 5px;"><span>Netto årskostnad (efter skatt):</span> <span>${nettoArsKostnad.toLocaleString('sv-SE')} kr</span></div>
                                         
-                                        <small class="beräknings-notis">* Skatteavdraget baseras på 25 kr/mil, 30% marginalskatt och 11 000 kr självrisk.</small>
+                                        <small class="beräknings-notis">* Baseras på 25 kr/mil i avdrag, 30% marginalskatt och 11 000 kr i självrisk (Skatteverkets regler).</small>
                                     </div>
 
                                     <div class="text-block" style="border-left: 5px solid var(--accent-color);">
@@ -368,6 +373,8 @@
 
         function initieraAnkomstVäljare(körtidMinuter) {
             const tidsFält = document.getElementById('ankomst-tid');
+            if(!tidsFält) return;
+            
             function beräknaAvgång() {
                 const [timmar, minuter] = tidsFält.value.split(':').map(Number);
                 let totalaMinuter = timmar * 60 + minuter - körtidMinuter;
