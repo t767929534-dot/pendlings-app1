@@ -1,15 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://sitemaps.org">
 
+  <!-- Startsidan -->
   <url>
     <loc>https://pendlings-app1.t-767929534-cloudflare.workers.dev/</loc>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
-
-  </urlset>
   
-  <!-- KLISTRA IN DINA RADER FRÅN GOOGLE SHEETS HÄR UNDER -->
+  <!-- Dina rader från Google Sheets -->
 <url><loc>https://pendlings-app1.t-767929534-cloudflare.workers.dev/?fran=Stockholm&amp;till=Uppsala</loc><changefreq>monthly</changefreq></url>
 <url><loc>https://pendlings-app1.t-767929534-cloudflare.workers.dev/?fran=G%C3%B6teborg&amp;till=Bor%C3%A5s</loc><changefreq>monthly</changefreq></url>
 <url><loc>https://pendlings-app1.t-767929534-cloudflare.workers.dev/?fran=Malm%C3%B6&amp;till=Lund</loc><changefreq>monthly</changefreq></url>
