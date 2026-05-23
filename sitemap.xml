@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://sitemaps.org">
   <url>
-    <loc>https://pendlings-app1.t-767929534-cloudflare.workers.dev/</loc>
+    <loc>https://workers.dev</loc>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
+</urlset>
+
   
   <!-- KLISTRA IN DINA RADER FRÅN GOOGLE SHEETS HÄR UNDER -->
 <url><loc>https://pendlings-app1.t-767929534-cloudflare.workers.dev/?fran=Stockholm&amp;till=Uppsala</loc><changefreq>monthly</changefreq></url>
