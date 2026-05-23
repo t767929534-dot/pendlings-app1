@@ -3,90 +3,81 @@ export default {
     const url = new URL(request.url);
     const userAgent = request.headers.get('user-agent') || '';
 
-    // Detektera om besökaren är Googlebot eller Googles testverktyg
+    // Detektera Googlebot eller Googles testverktyg
     const isGoogleBot = userAgent.includes('Googlebot') || userAgent.includes('Google Inspection Tool');
 
-    // Hämta parametrarna från URL-adressen (?fran=...&till=...)
     const franStad = url.searchParams.get('fran');
     const tillStad = url.searchParams.get('till');
 
-    // Om det er Google, och de försöker besöka en specifik rutt
+    // Om det är Googlebot som besöker en rutt-länk
     if (isGoogleBot && franStad && tillStad) {
       try {
-        // 1. Hämta din index.html från Cloudflare Assets
+        // 1. Hämta din index.html från Cloudflare
         const response = await env.ASSETS.fetch(request);
         let html = await response.text();
 
-        // 2. HÄMTA DATA FRÅN DITT SPREADSHEET (Publik JSON-länk helt utan API-nyckel)
-        const sheetResponse = await fetch(`https://google.com`);
-        const textData = await sheetResponse.text();
-        
-        // Google skickar med extra text i början och slutet, vi rensar bort den för att få ren JSON
-        const jsonString = textData.substring(textData.indexOf('{'), textData.lastIndexOf('}') + 1);
-        const jsonData = JSON.parse(jsonString);
-        const rader = jsonData.table.rows || [];
+        // 2. Hämta rutter.csv direkt från ditt eget arkiv på servern
+        const csvRequest = new Request(`${url.origin}/rutter.csv`);
+        const csvResponse = await env.ASSETS.fetch(csvRequest);
+        const csvText = await csvResponse.text();
 
+        // 3. Läs och dela upp CSV-filen
+        let rader = csvText.split(/\r?\n/);
         let hittadRad = null;
-        
-        // 3. SÖK IGENOM BLADET EFTER RÄTT RAD
-        for (let i = 0; i < rader.length; i++) {
-          const celler = rader[i].c || [];
-          // Kontrollera att kolumn A och B har värden
-          const startIArk = celler[0] && celler[0].v ? celler[0].v.toString().toLowerCase().trim() : '';
-          const malIArk = celler[1] && celler[1].v ? celler[1].v.toString().toLowerCase().trim() : '';
-          
-          if (startIArk === franStad.toLowerCase().trim() && malIArk === tillStad.toLowerCase().trim()) {
-            hittadRad = celler;
-            break;
+
+        for (let i = 1; i < rader.length; i++) {
+          let kolumner = rader[i].split(',');
+          if (kolumner.length >= 5) {
+            let csvFran = kolumner[0].trim().toLowerCase();
+            let csvTill = kolumner[1].trim().toLowerCase();
+
+            if (csvFran === franStad.toLowerCase().trim() && csvTill === tillStad.toLowerCase().trim()) {
+              hittadRad = kolumner;
+              break;
+            }
           }
         }
 
-        // 4. OM RADEN HITTAS: BYGG HTML TILL GOOGLE
+        // 4. Om rutten hittas i CSV-filen, bygg HTML exakt som din JS gör
         if (hittadRad) {
-          // Vi plockar ut värdena (.v) från rätt kolumn (A=0, B=1, C=2, D=3, E=4)
-          const start = hittadRad[0] ? hittadRad[0].v : '';
-          const mal = hittadRad[1] ? hittadRad[1].v : '';
-          const distans = hittadRad[2] ? hittadRad[2].v : '';
-          const tid = hittadRad[3] ? hittadRad[3].v : '';
-          const kalkylText = hittadRad[4] ? hittadRad[4].v : ''; // Din färdiga text/ekonomiska kalkyl
+          const km = parseFloat(hittadRad[2].replace(/[^\d.]/g, ''));
+          const tid = hittadRad[3].trim();
+          const genereradText = hittadRad[4].replace(/"/g, '').trim();
 
-          // Skapa unika sökmorstaggar för din SEO
-          const unikTitel = `<title>📍 ${start} till ${mal} - Tid, Avstånd och Pendlingskalkyl</title>`;
-          const unikBeskrivning = `<meta name="description" content="Avståndet mellan ${start} och ${mal} är ${distans} km. Beräknad körtid är ${tid} min. Läs fullständig pendlingskalkyl här.">`;
-          
-          // Strukturera upp texten snyggt så Google kan indexera den utan problem
+          // Kör din exakta matte på servern för ekonomin
+          const kostnadEnkel = km * 1.304;
+          const manadsKostnad = Math.round(kostnadEnkel * 2 * 22);
+
+          // Skapa ditt unika rutt-innehåll (Exakt samma HTML-struktur som din JS skapar)
           const uniktInnehall = `
-            <main class="container">
-              <header>
-                <a href="/" style="text-decoration:none;font-size:0.9rem;color:var(--text-light);">⬅️ Tillbaka till start</a>
-                <h1 style="margin-top:15px;">📍 ${start} ➔ ${mal}</h1>
-                <p class="subtitle">Beräknad pendlingsdata av Karl-Johan Gyllenstorm</p>
-              </header>
-              <div class="historik-box" style="margin-top:20px; white-space: pre-wrap;">
-                <p>📏 <strong>Distans:</strong> ${distans} km</p>
-                <p>⏱️ <strong>Beräknad körtid:</strong> ${tid} min</p>
-                <hr style="margin:15px 0; border:0; border-top:1px solid var(--border-color);">
-                <!-- Här spottas hela din genererade text ut från kolumn E -->
-                <div>${kalkylText}</div>
+            <div id="innehall">
+              <div class="kalkyl-grid">
+                <div class="kalkyl-kort tid"><span class="etikett">⏱️ Körtid</span><span class="siffra">${tid} min</span></div>
+                <div class="kalkyl-kort distans"><span class="etikett">📏 Distans</span><span class="siffra">${km} km</span></div>
+                <div class="kalkyl-kort kostnad"><span class="etikett">⛽ Bränsle</span><span class="siffra">${Math.round(kostnadEnkel)} kr</span></div>
               </div>
-            </main>
+              <div class="text-block">
+                <p>📝 Avståndet mellan ${franStad} och ${tillStad} är ${km} km. Månadskostnad: ${manadsKostnad} kr.</p>
+                <p>${genereradText}</p>
+              </div>
+            </div>
           `;
 
-          // Byt ut grundtiteln och dölj startsidans sökfält så Google fokuserar helt på rutt-texten
-          html = html.replace(/<title>.*?<\/title>/, unikTitel + unikBeskrivning);
-          html = html.replace('<div class="container">', uniktInnehall + '<div class="container" style="display:none;">');
+          // Injicera värdena på rätt ID-platser i din index.html innan Google ser sidan
+          html = html.replace('id="sidtitel">', `id="sidtitel"> 📍 ${franStad} ➔ ${tillStad} | Karl-Johan Gyllenstorm `);
+          html = html.replace('id="rubrik">', `id="rubrik">📍 ${franStad} ➔ ${tillStad}`);
+          html = html.replace('<div id="innehall">', uniktInnehall);
 
           return new Response(html, {
             headers: { 'content-type': 'text/html;charset=UTF-8' }
           });
         }
-      } catch (error) {
-        // Om något strular med tolkningen, släpp igenom originalfilen
+      } catch (e) {
         return env.ASSETS.fetch(request);
       }
     }
 
-    // För vanliga användare samt din vanliga startsida: Kör på som vanligt
+    // Släpp igenom vanliga användare helt orörda
     return env.ASSETS.fetch(request);
   }
 };
