@@ -18,7 +18,7 @@ export default {
         let html = await response.text();
 
         // 2. HÄMTA DATA FRÅN DITT SPREADSHEET (Glöm inte att lägga in din API_NYCKEL längst bak!)
-        const sheetResponse = await fetch(`https://googleapis.com`);
+        const sheetResponse = await fetch(`https://google.com`);
         const sheetData = await sheetResponse.json();
         const rader = sheetData.values || [];
 
