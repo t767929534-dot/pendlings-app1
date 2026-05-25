@@ -17,26 +17,19 @@
             --text-light: #7f8c8d;
             --shadow: 0 4px 6px rgba(0,0,0,0.05);
             --radius: 8px;
-            --intensiv-färg: #2c3e50;
             --success-color: #1abc9c;
-            --warning-color: #e67e22; /* Ny färg för risksektionen */
+            --warning-color: #e67e22;
         }
 
-        /* Dark Mode */
         body.dark-theme {
             --bg-color: #121212;
             --card-bg: #1e1e1e;
             --primary-color: #ecf0f1;
             --text-color: #e0e0e0;
             --text-light: #a0a0a0;
-            --intensiv-färg: #2c3e50;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -55,7 +48,6 @@
             border-radius: var(--radius);
             box-shadow: var(--shadow);
             border-top: 5px solid var(--accent-color);
-            transition: background-color 0.3s;
         }
 
         .nav-rad {
@@ -72,11 +64,6 @@
             color: var(--text-light);
             text-decoration: none;
             font-size: 0.9rem;
-            transition: color 0.2s;
-        }
-
-        .tillbaka-länk:hover {
-            color: var(--primary-color);
         }
 
         .dela-knapp {
@@ -90,10 +77,7 @@
             display: flex;
             align-items: center;
             gap: 5px;
-            transition: all 0.2s;
         }
-
-        body.dark-theme .dela-knapp { border-color: #444; }
 
         header {
             margin-bottom: 25px;
@@ -102,12 +86,6 @@
         }
 
         body.dark-theme header { border-bottom-color: #333; }
-
-        h1 {
-            color: var(--primary-color);
-            font-size: 1.5rem;
-            line-height: 1.3;
-        }
 
         .kalkyl-grid {
             display: grid;
@@ -125,50 +103,27 @@
             border-radius: var(--radius);
             text-align: center;
             color: white;
-            box-shadow: var(--shadow);
         }
 
         .kalkyl-kort.tid { background-color: #2c3e50; border-left: 5px solid var(--accent-color); }
         .kalkyl-kort.distans { background-color: #4a6572; }
         .kalkyl-kort.kostnad { background-color: var(--success-color); }
 
-        .kalkyl-kort .etikett {
-            display: block;
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            opacity: 0.9;
-            margin-bottom: 5px;
-        }
-
-        .kalkyl-kort .siffra {
-            font-size: 1.6rem;
-            font-weight: bold;
-        }
+        .kalkyl-kort .etikett { display: block; font-size: 0.85rem; text-transform: uppercase; margin-bottom: 5px; }
+        .kalkyl-kort .siffra { font-size: 1.6rem; font-weight: bold; }
 
         .text-block {
             background: #fafbfc;
             border: 1px solid #e1e8ed;
             border-radius: var(--radius);
             padding: 20px;
-            font-size: 1.05rem;
-            line-height: 1.6;
-            color: var(--text-color);
             margin-bottom: 20px;
-            transition: background-color 0.3s, border-color 0.3s;
         }
 
-        body.dark-theme .text-block {
-            background: #252525;
-            border-color: #383838;
-        }
+        body.dark-theme .text-block { background: #252525; border-color: #383838; }
 
-        .rad-ekonomi {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 5px;
-        }
-
+        .rad-ekonomi { display: flex; justify-content: space-between; margin-bottom: 5px; }
+        
         .beräknings-notis {
             font-size: 0.8rem;
             color: var(--text-light);
@@ -178,17 +133,13 @@
             display: block;
         }
 
-        body.dark-theme .beräknings-notis { border-top-color: #333; }
-
-        .ankomst-input-fält {
+        .input-fält {
             padding: 6px 10px;
             border: 2px solid #e1e8ed;
             border-radius: 6px;
-            font-size: 1rem;
             background: var(--card-bg);
             color: var(--text-color);
-            outline: none;
-            margin-left: 10px;
+            margin-left: 5px;
         }
 
         .maps-knapp {
@@ -201,16 +152,11 @@
             padding: 14px;
             border-radius: var(--radius);
             font-weight: 600;
-            text-align: center;
-            box-shadow: var(--shadow);
             cursor: pointer;
             border: none;
             width: 100%;
             font-size: 1rem;
-            font-family: inherit;
         }
-
-        body.dark-theme .maps-knapp { background: #34495e; }
 
         .darkmode-btn {
             position: fixed;
@@ -222,12 +168,6 @@
             padding: 12px;
             border-radius: 50%;
             cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-            font-size: 1.2rem;
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             width: 45px;
             height: 45px;
         }
@@ -237,8 +177,8 @@
 
     <div class="container">
         <div class="nav-rad">
-            <a href="index.html" class="tillbaka-länk">⬅️ Tillbaka till start</a>
-            <button id="dela-btn" class="dela-knapp" style="display: none;">🔗 Dela rutt</button>
+            <a href="index.html" class="tillbaka-länk">⬅️ Tillbaka</a>
+            <button id="dela-btn" class="dela-knapp">🔗 Dela rutt</button>
         </div>
         
         <header>
@@ -246,176 +186,164 @@
         </header>
         
         <div id="innehall">
-            <div class="laddar">Söker efter objektiv data...</div>
+            <div class="laddar">Söker efter data...</div>
         </div>
     </div>
 
-    <button id="darkmode-btn" class="darkmode-btn" title="Växla nattläge">🌓</button>
+    <button id="darkmode-btn" class="darkmode-btn">🌓</button>
 
     <script>
-        const urlParams = new URLSearchParams(window.location.search);
-        const fran = urlParams.get('fran');
-        const till = urlParams.get('till');
-
-        // INSTÄLLNINGAR FÖR BERÄKNING
+        // --- KONFIGURATION & ORIGINALDATA ---
         const KR_PER_KM = 1.304; 
         const ARBETSDAGAR_PER_AR = 225;
         const AVDRAG_PER_KM = 2.5; 
         const SJÄLVRISK = 11000; 
         const SKATT_EFFEKT = 0.30; 
+        const RISK_INCIDENT = 0.00004; 
+        const RISK_PERSONSKADA = 0.000003;
+        const CO2_PER_KM = 120; // gram
 
-        // RISKFAKTORER (Sannolikhet per mil)
-        const RISK_INCIDENT = 0.00004; // Plåtskada/Vilt
-        const RISK_PERSONSKADA = 0.000003; // Lindrig personskada
+        const urlParams = new URLSearchParams(window.location.search);
+        const fran = urlParams.get('fran');
+        const till = urlParams.get('till');
 
-        if (localStorage.getItem('mörkt_tema') === 'true') {
-            document.body.classList.add('dark-theme');
-        }
+        // Dark mode
+        if (localStorage.getItem('mörkt_tema') === 'true') document.body.classList.add('dark-theme');
         document.getElementById('darkmode-btn').addEventListener('click', () => {
             document.body.classList.toggle('dark-theme');
             localStorage.setItem('mörkt_tema', document.body.classList.contains('dark-theme'));
         });
 
+        // Dela-funktion
+        document.getElementById('dela-btn').addEventListener('click', () => {
+            if (navigator.share) {
+                navigator.share({ title: document.title, url: window.location.href });
+            } else {
+                alert("Länken är: " + window.location.href);
+            }
+        });
+
         if (fran && till) {
-            document.getElementById('sidtitel').innerText = ` ${fran} ➔ ${till} | Pendlingstid & Kostnad | Karl-Johan Gyllenstorm `;
+            document.getElementById('sidtitel').innerText = `${fran} ➔ ${till} | Pendlingstid | Gyllenstorm`;
             document.getElementById('rubrik').innerText = `📍 ${fran} ➔ ${till}`;
-            
-            const delaBtn = document.getElementById('dela-btn');
-            delaBtn.style.display = 'flex';
 
             fetch('rutter.csv')
-                .then(response => response.text())
+                .then(res => res.text())
                 .then(data => {
-                    let rader = data.split(/\r?\n/);
-                    let ruttHittad = false;
+                    const rader = data.split(/\r?\n/);
+                    let hittad = false;
 
                     for (let i = 1; i < rader.length; i++) {
-                        let kolumner = rader[i].split(',');
-                        if (kolumner.length >= 5) {
-                            let csvFran = kolumner[0].trim();
-                            let csvTill = kolumner[1].trim();
-                            let distansStr = kolumner[2].trim();
-                            let tid = kolumner[3].trim();
-                            let genereradText = kolumner[4].replace(/"/g, '').trim();
-
-                            if (csvFran.toLowerCase() === fran.toLowerCase() && csvTill.toLowerCase() === till.toLowerCase()) {
-                                
-                                const km = parseFloat(distansStr.replace(/[^\d.]/g, ''));
-                                const mil = km / 10;
-                                
-                                // Grundberäkningar kostnad
-                                const dagligDistansKm = km * 2;
-                                const dagligDistansMil = mil * 2;
-                                const kostnadEnkel = km * KR_PER_KM;
-                                const manadsKostnad = Math.round(kostnadEnkel * 2 * 22);
-                                const arsKostnadBrutto = Math.round(kostnadEnkel * 2 * ARBETSDAGAR_PER_AR);
-                                
-                                // Skatteavdrag
-                                const totaltAvdragsUnderlag = Math.round(dagligDistansKm * ARBETSDAGAR_PER_AR * AVDRAG_PER_KM);
-                                let skatteLättnad = 0;
-                                if (totaltAvdragsUnderlag > SJÄLVRISK) {
-                                    skatteLättnad = Math.round((totaltAvdragsUnderlag - SJÄLVRISK) * SKATT_EFFEKT);
-                                }
-                                const nettoArsKostnad = arsKostnadBrutto - skatteLättnad;
-
-                                // RISKBERÄKNINGAR (Sannolikhet: 1 - (1-R)^distans)
-                                const distansManadMil = dagligDistansMil * 22;
-                                const distansArMil = dagligDistansMil * ARBETSDAGAR_PER_AR;
-
-                                const riskIncidentManad = (1 - Math.pow(1 - RISK_INCIDENT, distansManadMil)) * 100;
-                                const riskIncidentAr = (1 - Math.pow(1 - RISK_INCIDENT, distansArMil)) * 100;
-                                const riskSkadaManad = (1 - Math.pow(1 - RISK_PERSONSKADA, distansManadMil)) * 100;
-                                const riskSkadaAr = (1 - Math.pow(1 - RISK_PERSONSKADA, distansArMil)) * 100;
-
-                                document.getElementById('innehall').innerHTML = `
-                                    <div class="kalkyl-grid">
-                                        <div class="kalkyl-kort tid">
-                                            <span class="etikett">⏱️ Körtid</span>
-                                            <span class="siffra">${tid} min</span>
-                                        </div>
-                                        <div class="kalkyl-kort distans">
-                                            <span class="etikett">📏 Distans</span>
-                                            <span class="siffra">${km} km</span>
-                                        </div>
-                                        <div class="kalkyl-kort kostnad">
-                                            <span class="etikett">⛽ Bränsle</span>
-                                            <span class="siffra">${Math.round(kostnadEnkel)} kr</span>
-                                        </div>
-                                    </div>
-
-                                    <div class="text-block">
-                                        <p>📝 ${genereradText}</p>
-                                    </div>
-
-                                    <div class="text-block" style="border-left: 5px solid var(--success-color);">
-                                        <p style="margin-bottom: 10px;">📊 <strong>Gyllenstormś Ekonomiska Kalkyl (Bil)</strong></p>
-                                        <div class="rad-ekonomi"><span>Månadskostnad (ca 22 dgr):</span> <strong>${manadsKostnad.toLocaleString('sv-SE')} kr</strong></div>
-                                        <div class="rad-ekonomi"><span>Årskostnad (Bränsle):</span> <strong>${arsKostnadBrutto.toLocaleString('sv-SE')} kr</strong></div>
-                                        <hr style="margin: 10px 0; border: 0; border-top: 1px solid #eee;">
-                                        <div class="rad-ekonomi" style="color: #27ae60;"><span>Uppskattad skattereduktion:</span> <strong>- ${skatteLättnad.toLocaleString('sv-SE')} kr/år</strong></div>
-                                        <div class="rad-ekonomi" style="font-weight: bold; margin-top: 5px;"><span>Netto årskostnad (efter skatt):</span> <span>${nettoArsKostnad.toLocaleString('sv-SE')} kr</span></div>
-                                        
-                                        <small class="beräknings-notis">* Baseras på 25 kr/mil i avdrag, 30% marginalskatt och 11 000 kr i självrisk (Skatteverkets regler). Informationen är publicerad med stöd från YGL paragraf 1 och Tryckfrihetsförordningen. Informationen är sammanställd av Karl-Johan Gyllenstorm och är framtagen för eget behov. Copyright 2026 - Karl-Johan Gyllenstorm.</small>
-                                    </div>
-
-                                    <div class="text-block" style="border-left: 5px solid var(--warning-color);">
-                                        <p style="margin-bottom: 10px;">⚠️ <strong>Trafiksäkerhet & Riskprognos</strong></p>
-                                        <p style="font-size: 0.85rem; color: var(--text-light); margin-bottom: 12px;">Baserat på körsträcka: ${Math.round(distansArMil).toLocaleString('sv-SE')} mil/år.</p>
-                                        
-                                        <div class="rad-ekonomi" style="margin-bottom: 8px;">
-                                            <span>Sannolikhet incident (plåt/vilt):</span>
-                                            <span style="font-weight: bold;">Månad: ${riskIncidentManad.toFixed(1)}% | År: ${riskIncidentAr.toFixed(1)}%</span>
-                                        </div>
-                                        <div class="rad-ekonomi">
-                                            <span>Sannolikhet personskada:</span>
-                                            <span style="font-weight: bold;">Månad: ${riskSkadaManad.toFixed(2)}% | År: ${riskSkadaAr.toFixed(2)}%</span>
-                                        </div>
-                                        
-                                        <small class="beräknings-notis" style="font-style: italic; border-top: 1px solid #eee; padding-top: 8px; margin-top: 10px;">
-                                            Prognosen baseras på nationell olycksdata per personbilsmil. Min personliga risk påverkas av väglag, mörkerkörning och fordonets säkerhet.
-                                        </small>
-                                    </div>
-
-                                    <div class="text-block" style="border-left: 5px solid var(--accent-color);">
-                                        <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 5px;">
-                                            <label style="font-weight: bold;">⏱️ När måste jag vara framme?</label>
-                                            <input type="time" id="ankomst-tid" class="ankomst-input-fält" value="08:00">
-                                        </div>
-                                        <p style="margin-top: 12px;">🚗 Jag bör rulla hemifrån senast: <strong id="starta-senast" style="color: #e74c3c; font-size: 1.15rem;">-</strong></p>
-                                    </div>
-
-                                    <form action="https://www.google.com/maps/dir/" method="GET" target="_blank">
-                                        <input type="hidden" name="api" value="1">
-                                        <input type="hidden" name="origin" value="${csvFran}">
-                                        <input type="hidden" name="destination" value="${csvTill}">
-                                        <input type="hidden" name="travelmode" value="driving">
-                                        <button type="submit" class="maps-knapp">🗺️ Starta GPS i Google Maps</button>
-                                    </form>
-                                `;
-                                
-                                initieraAnkomstVäljare(parseInt(tid));
-                                ruttHittad = true;
-                                break;
-                            }
+                        const cols = rader[i].split(',');
+                        if (cols.length >= 5 && cols[0].trim().toLowerCase() === fran.toLowerCase()) {
+                            renderSida(cols);
+                            hittad = true;
+                            break;
                         }
                     }
+                    if(!hittad) document.getElementById('innehall').innerHTML = "Rutten kunde inte hittas.";
                 });
         }
 
-        function initieraAnkomstVäljare(körtidMinuter) {
-            const tidsFält = document.getElementById('ankomst-tid');
-            if(!tidsFält) return;
+        function renderSida(cols) {
+            const csvFran = cols[0].trim();
+            const csvTill = cols[1].trim();
+            const km = parseFloat(cols[2].replace(/[^\d.]/g, ''));
+            const tid = cols[3].trim();
+            const genereradText = cols[4].replace(/"/g, '').trim();
+
+            // Beräkningar (Dina original-formler)
+            const mil = km / 10;
+            const dagligDistansKm = km * 2;
+            const dagligDistansMil = mil * 2;
+            const kostnadEnkel = km * KR_PER_KM;
+            const manadsKostnad = Math.round(kostnadEnkel * 2 * 22);
+            const arsKostnadBrutto = Math.round(kostnadEnkel * 2 * ARBETSDAGAR_PER_AR);
             
-            function beräknaAvgång() {
-                const [timmar, minuter] = tidsFält.value.split(':').map(Number);
-                let totalaMinuter = timmar * 60 + minuter - körtidMinuter;
-                if (totalaMinuter < 0) totalaMinuter += 1440;
-                const h = String(Math.floor(totalaMinuter / 60)).padStart(2, '0');
-                const m = String(totalaMinuter % 60).padStart(2, '0');
-                document.getElementById('starta-senast').textContent = `kl. ${h}:${m}`;
+            const totaltAvdragsUnderlag = Math.round(dagligDistansKm * ARBETSDAGAR_PER_AR * AVDRAG_PER_KM);
+            let skatteLättnad = totaltAvdragsUnderlag > SJÄLVRISK ? Math.round((totaltAvdragsUnderlag - SJÄLVRISK) * SKATT_EFFEKT) : 0;
+            const nettoArsKostnad = arsKostnadBrutto - skatteLättnad;
+
+            const distansManadMil = dagligDistansMil * 22;
+            const distansArMil = dagligDistansMil * ARBETSDAGAR_PER_AR;
+            const riskIncidentManad = (1 - Math.pow(1 - RISK_INCIDENT, distansManadMil)) * 100;
+            const riskIncidentAr = (1 - Math.pow(1 - RISK_INCIDENT, distansArMil)) * 100;
+            const riskSkadaManad = (1 - Math.pow(1 - RISK_PERSONSKADA, distansManadMil)) * 100;
+            const riskSkadaAr = (1 - Math.pow(1 - RISK_PERSONSKADA, distansArMil)) * 100;
+            
+            const co2Ar = Math.round((dagligDistansKm * ARBETSDAGAR_PER_AR * CO2_PER_KM) / 1000);
+
+            document.getElementById('innehall').innerHTML = `
+                <div class="kalkyl-grid">
+                    <div class="kalkyl-kort tid">
+                        <span class="etikett">⏱️ Körtid</span>
+                        <span class="siffra">${tid} min</span>
+                    </div>
+                    <div class="kalkyl-kort distans">
+                        <span class="etikett">📏 Distans</span>
+                        <span class="siffra">${km} km</span>
+                    </div>
+                    <div class="kalkyl-kort kostnad">
+                        <span class="etikett">⛽ Bränsle</span>
+                        <span class="siffra">${Math.round(kostnadEnkel)} kr</span>
+                    </div>
+                </div>
+
+                <div class="text-block">
+                    <p>📝 ${genereradText}</p>
+                    <p style="margin-top:10px; font-size:0.85rem; color:var(--success-color)">🌱 Beräknat CO2-utsläpp: ~${co2Ar} kg/år</p>
+                </div>
+
+                <div class="text-block" style="border-left: 5px solid var(--success-color);">
+                    <p style="margin-bottom: 10px;">📊 <strong>Gyllenstormś Ekonomiska Kalkyl (Bil)</strong></p>
+                    <div class="rad-ekonomi"><span>Månadskostnad (ca 22 dgr):</span> <strong>${manadsKostnad.toLocaleString('sv-SE')} kr</strong></div>
+                    <div class="rad-ekonomi"><span>Årskostnad (Bränsle):</span> <strong>${arsKostnadBrutto.toLocaleString('sv-SE')} kr</strong></div>
+                    <hr style="margin: 10px 0; border: 0; border-top: 1px solid #eee;">
+                    <div class="rad-ekonomi" style="color: #27ae60;"><span>Uppskattad skattereduktion:</span> <strong>- ${skatteLättnad.toLocaleString('sv-SE')} kr/år</strong></div>
+                    <div class="rad-ekonomi" style="font-weight: bold; margin-top: 5px;"><span>Netto årskostnad (efter skatt):</span> <span>${nettoArsKostnad.toLocaleString('sv-SE')} kr</span></div>
+                    
+                    <small class="beräknings-notis">* Baseras på 25 kr/mil i avdrag, 30% marginalskatt och 11 000 kr i självrisk. Copyright 2026 - Karl-Johan Gyllenstorm.</small>
+                </div>
+
+                <div class="text-block" style="border-left: 5px solid var(--warning-color);">
+                    <p style="margin-bottom: 10px;">⚠️ <strong>Trafiksäkerhet & Riskprognos</strong></p>
+                    <div class="rad-ekonomi"><span>Sannolikhet incident (år):</span> <strong>${riskIncidentAr.toFixed(1)}%</strong></div>
+                    <div class="rad-ekonomi"><span>Sannolikhet personskada (år):</span> <strong>${riskSkadaAr.toFixed(2)}%</strong></div>
+                    <small class="beräknings-notis">Prognosen baseras på nationell olycksdata per personbilsmil.</small>
+                </div>
+
+                <div class="text-block" style="border-left: 5px solid var(--accent-color);">
+                    <div style="margin-bottom:10px">
+                        <label>⏱️ Vara framme:</label>
+                        <input type="time" id="ankomst-tid" class="input-fält" value="08:00">
+                    </div>
+                    <div>
+                        <label>🛡️ Säkerhetsmarginal:</label>
+                        <input type="number" id="marginal" class="input-fält" value="10" style="width:50px"> min
+                    </div>
+                    <p style="margin-top: 12px;">🚗 Starta senast: <strong id="starta-senast" style="color: #e74c3c; font-size: 1.15rem;">-</strong></p>
+                </div>
+
+                <button class="maps-knapp" onclick="window.open('https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(csvFran)}&destination=${encodeURIComponent(csvTill)}&travelmode=driving')">🗺️ Starta GPS i Google Maps</button>
+            `;
+
+            initieraLogik(parseInt(tid));
+        }
+
+        function initieraLogik(körtidMinuter) {
+            const tFält = document.getElementById('ankomst-tid');
+            const mFält = document.getElementById('marginal');
+            const resultat = document.getElementById('starta-senast');
+
+            function beräkna() {
+                const [h, m] = tFält.value.split(':').map(Number);
+                let totalMin = h * 60 + m - körtidMinuter - parseInt(mFält.value || 0);
+                if (totalMin < 0) totalMin += 1440;
+                resultat.textContent = `kl. ${String(Math.floor(totalMin/60)).padStart(2,'0')}:${String(totalMin%60).padStart(2,'0')}`;
             }
-            tidsFält.addEventListener('input', beräknaAvgång);
-            beräknaAvgång();
+            tFält.addEventListener('input', beräkna);
+            mFält.addEventListener('input', beräkna);
+            beräkna();
         }
     </script>
 </body>
