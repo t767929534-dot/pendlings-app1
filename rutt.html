@@ -17,20 +17,17 @@
             --text-light: #7f8c8d;
             --shadow: 0 4px 6px rgba(0,0,0,0.05);
             --radius: 8px;
-            --intensiv-färg: #2c3e50;
             --success-color: #1abc9c;
             --warning-color: #e67e22;
             --danger-color: #e74c3c;
         }
 
-        /* Dark Mode */
         body.dark-theme {
             --bg-color: #121212;
             --card-bg: #1e1e1e;
             --primary-color: #ecf0f1;
             --text-color: #e0e0e0;
             --text-light: #a0a0a0;
-            --intensiv-färg: #2c3e50;
         }
 
         * {
@@ -76,9 +73,7 @@
             transition: color 0.2s;
         }
 
-        .tillbaka-länk:hover {
-            color: var(--primary-color);
-        }
+        .tillbaka-länk:hover { color: var(--primary-color); }
 
         .dela-knapp {
             background: none;
@@ -91,7 +86,6 @@
             display: flex;
             align-items: center;
             gap: 5px;
-            transition: all 0.2s;
         }
 
         body.dark-theme .dela-knapp { border-color: #444; }
@@ -137,7 +131,6 @@
             display: block;
             font-size: 0.85rem;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
             opacity: 0.9;
             margin-bottom: 5px;
         }
@@ -154,11 +147,187 @@
             padding: 20px;
             font-size: 1.05rem;
             line-height: 1.6;
-            color: var(--text-color);
             margin-bottom: 20px;
-            transition: background-color 0.3s, border-color 0.3s;
         }
 
         body.dark-theme .text-block {
             background: #252525;
-            border-color: #3838
+            border-color: #383838;
+        }
+
+        .rad-ekonomi {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        .beräknings-notis {
+            font-size: 0.8rem;
+            color: var(--text-light);
+            margin-top: 15px;
+            border-top: 1px solid #e1e8ed;
+            padding-top: 10px;
+            display: block;
+        }
+
+        body.dark-theme .beräknings-notis { border-top-color: #333; }
+
+        .ankomst-input-fält {
+            padding: 6px 10px;
+            border: 2px solid #e1e8ed;
+            border-radius: 6px;
+            font-size: 1rem;
+            background: var(--card-bg);
+            color: var(--text-color);
+            outline: none;
+            margin-left: 10px;
+        }
+
+        .maps-knapp {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: #2c3e50;
+            color: white;
+            padding: 14px;
+            border-radius: var(--radius);
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            width: 100%;
+            font-size: 1rem;
+        }
+
+        .darkmode-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #2c3e50;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 50%;
+            cursor: pointer;
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="nav-rad">
+            <a href="index.html" class="tillbaka-länk">⬅️ Tillbaka till start</a>
+            <button id="dela-btn" class="dela-knapp" style="display: none;">🔗 Dela rutt</button>
+        </div>
+        
+        <header>
+            <h1 id="rubrik">Hämtar ruttdata...</h1>
+        </header>
+        
+        <div id="innehall">
+            <p>Läser in databasen från Cloudflare Pages...</p>
+        </div>
+    </div>
+
+    <button id="darkmode-btn" class="darkmode-btn" title="Växla nattläge">🌓</button>
+
+    <script>
+        // Globala variabler för URL-parametrar
+        const urlParams = new URLSearchParams(window.location.search);
+        const fran = urlParams.get('fran') || "";
+        const till = urlParams.get('till') || "";
+
+        // KONSTANTER FÖR BERÄKNING
+        const KR_PER_KM = 1.304; 
+        const ARBETSDAGAR_PER_AR = 225;
+        const AVDRAG_PER_KM = 2.5; 
+        const SJÄLVRISK = 11000; 
+        const SKATT_EFFEKT = 0.30; 
+
+        const RISK_INCIDENT = 0.00004; 
+        const RISK_PERSONSKADA = 0.000003; 
+
+        // Hantera mörkt läge direkt vid start
+        if (localStorage.getItem('mörkt_tema') === 'true') {
+            document.body.classList.add('dark-theme');
+        }
+        document.getElementById('darkmode-btn').addEventListener('click', () => {
+            document.body.classList.toggle('dark-theme');
+            localStorage.setItem('mörkt_tema', document.body.classList.contains('dark-theme'));
+        });
+
+        // Kör hela logiken först när DOM-strukturen är helt redo
+        document.addEventListener("DOMContentLoaded", () => {
+            if (!fran || !till) {
+                document.getElementById('rubrik').innerText = "⚠️ Ingen rutt vald";
+                document.getElementById('innehall').innerHTML = "<p>Gå tillbaka till startsidan och välj startpunkt samt destination.</p>";
+                return;
+            }
+
+            document.getElementById('sidtitel').innerText = `${fran} ➔ ${till} | Pendlingstid & Kostnad`;
+            document.getElementById('rubrik').innerText = `📍 ${fran} ➔ ${till}`;
+
+            // Läser in filen relativt till rotmappen på Cloudflare Pages
+            fetch('./rutter.csv')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Kunde inte hitta rutter.csv (Status: ${response.status}). Kontrollera att filen ligger på GitHub-rotmappen.`);
+                    }
+                    return response.text();
+                })
+                .then(data => {
+                    let rader = data.split(/\r?\n/);
+                    let ruttHittad = false;
+
+                    for (let i = 1; i < rader.length; i++) {
+                        let kolumner = rader[i].split(',');
+                        if (kolumner.length >= 5) {
+                            let csvFran = kolumner[0].trim();
+                            let csvTill = kolumner[1].trim();
+                            let distansStr = kolumner[2].trim();
+                            let tid = kolumner[3].trim();
+                            let genereradText = kolumner[4].replace(/"/g, '').trim();
+
+                            if (csvFran.toLowerCase() === fran.toLowerCase() && csvTill.toLowerCase() === till.toLowerCase()) {
+                                ruttHittad = true;
+                                byggGränssnitt(kmFrånStr(distansStr), tid, genereradText, csvFran, csvTill);
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!ruttHittad) {
+                        document.getElementById('innehall').innerHTML = `<p>Rutten mellan <strong>"${fran}"</strong> och <strong>"${till}"</strong> matchar inte någon rad i din rutter.csv.</p>`;
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    document.getElementById('rubrik').innerText = "❌ Fel vid inläsning";
+                    document.getElementById('innehall').innerHTML = `
+                        <div style="background: rgba(231, 76, 60, 0.1); border-left: 4px solid var(--danger-color); padding: 15px; border-radius: 6px;">
+                            <p style="font-weight: bold; color: var(--danger-color);">Ett nätverks- eller byggfel uppstod på Cloudflare Pages:</p>
+                            <p style="font-family: monospace; font-size: 0.9rem; margin-top: 5px;">${err.message}</p>
+                        </div>
+                    `;
+                });
+        });
+
+        // Hjälpfunktion för att rensa strängar till rena siffror
+        function kmFrånStr(str) {
+            return parseFloat(str.replace(/[^\d.]/g, '')) || 0;
+        }
+
+        // Funktion som bygger upp DOM dynamiskt när datan har validerats
+        function byggGränssnitt(km, tid, text, csvFran, csvTill) {
+            document.getElementById('dela-btn').style.display = 'flex';
+            
+            const mil = km / 10;
+            const dagligDistansKm = km * 2;
+            const dagligDistansMil = mil * 2;
+            const kostnadEnkel =
