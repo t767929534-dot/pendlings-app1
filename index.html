@@ -1,56 +1,3 @@
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // 1. Hämta parametrar från URL:en
-    const params = new URLSearchParams(window.location.search);
-    const fran = params.get('fran');
-    const till = params.get('till');
-
-    // Kör bara om båda parametrar finns
-    if (fran && till) {
-        const sökInput = document.getElementById('sök-input');
-        const tomMeddelande = document.getElementById('tom-sökning');
-        const kort = document.querySelectorAll('.rutt-kort');
-        
-        // 2. Fyll i sökrutan med "Stockholm Malmö" (eller vad du föredrar)
-        // Vi slår ihop dem till en sträng eftersom din funktion söker efter en textsträng
-        const sökSträng = (fran + " " + till).toLowerCase();
-        
-        if (sökInput) {
-            sökInput.value = sökSträng; // Fyll i rutan synligt
-        }
-
-        // 3. KÖR SÖKLOGIKEN MANUELLT (kopierad från din initieraSökfunktion)
-        // Vi hoppar över 'addEventListener' och kör koden direkt:
-        const sökOrd = sökSträng; 
-        let synligaKort = 0;
-
-        kort.forEach(r => {
-            const sökText = r.getAttribute('data-search');
-            // Säkerhetskontroll så att sökText finns
-            if (sökText && sökText.includes(sökOrd)) {
-                r.classList.remove('hidden');
-                synligaKort++;
-            } else {
-                r.classList.add('hidden');
-            }
-        });
-
-        // Hantera "inget resultat"-meddelande
-        if (tomMeddelande) {
-            if (synligaKort === 0) {
-                tomMeddelande.style.display = 'block';
-            } else {
-                tomMeddelande.style.display = 'none';
-            }
-        }
-        
-        // Uppdatera titeln för SEO
-        document.title = "Pendling " + fran + " till " + till;
-        console.log("Auto-sök utförd för:", fran, till, "- Synliga kort:", synligaKort);
-    }
-});
-</script>      
-
 <!DOCTYPE html>
 <html lang="sv">
 <head>
@@ -74,7 +21,6 @@ document.addEventListener('DOMContentLoaded', function() {
             --ikon-bg: #edf2f7;
         }
 
-        /* Dark Mode-klasser */
         body.dark-theme {
             --bg-color: #121212;
             --card-bg: #1e1e1e;
@@ -110,7 +56,6 @@ document.addEventListener('DOMContentLoaded', function() {
             border-radius: var(--radius);
             box-shadow: var(--shadow);
             border-top: 5px solid var(--accent-color);
-            transition: background-color 0.3s, box-shadow 0.3s;
         }
 
         header {
@@ -144,7 +89,6 @@ document.addEventListener('DOMContentLoaded', function() {
             color: var(--primary-color);
             margin-bottom: 10px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
         }
 
         .historik-lista {
@@ -163,17 +107,6 @@ document.addEventListener('DOMContentLoaded', function() {
             font-size: 0.9rem;
             text-decoration: none;
             font-weight: 500;
-            transition: opacity 0.2s;
-        }
-
-        .historik-item:hover {
-            opacity: 0.9;
-        }
-
-        .historik-tid {
-            font-size: 0.75rem;
-            opacity: 0.85;
-            font-weight: normal;
         }
 
         .historik-item.pos-0 { background-color: #2c3e50; border-left: 5px solid var(--accent-color); }
@@ -194,11 +127,6 @@ document.addEventListener('DOMContentLoaded', function() {
             color: var(--text-color);
             border-radius: var(--radius);
             outline: none;
-            transition: border-color 0.2s;
-        }
-
-        .sök-fält:focus {
-            border-color: var(--primary-color);
         }
 
         .sök-ikon {
@@ -207,7 +135,6 @@ document.addEventListener('DOMContentLoaded', function() {
             top: 50%;
             transform: translateY(-50%);
             color: var(--text-light);
-            font-size: 1rem;
         }
 
         .rutt-grid {
@@ -217,9 +144,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         @media (min-width: 600px) {
-            .rutt-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
+            .rutt-grid { grid-template-columns: repeat(2, 1fr); }
         }
 
         .rutt-kort {
@@ -234,16 +159,7 @@ document.addEventListener('DOMContentLoaded', function() {
             transition: all 0.2s ease-in-out;
         }
 
-        .rutt-kort.hidden {
-            display: none !important;
-        }
-
-        .rutt-kort:hover {
-            transform: translateY(-2px);
-            border-color: var(--accent-color);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            background: var(--card-bg);
-        }
+        .rutt-kort.hidden { display: none !important; }
 
         .ikon-box {
             font-size: 1.5rem;
@@ -258,38 +174,19 @@ document.addEventListener('DOMContentLoaded', function() {
             height: 45px;
         }
 
-        .rutt-info {
-            flex-grow: 1;
-        }
-
-        .rutt-titel {
-            font-weight: 600;
-            color: var(--primary-color);
-            font-size: 1rem;
-        }
-
-        .rutt-detalj {
-            font-size: 0.85rem;
-            color: var(--text-light);
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            margin-top: 2px;
-        }
+        .rutt-info { flex-grow: 1; }
+        .rutt-titel { font-weight: 600; color: var(--primary-color); }
+        .rutt-detalj { font-size: 0.85rem; color: var(--text-light); }
 
         .laddar, .inga-resultat {
             text-align: center;
             color: var(--text-light);
-            font-style: italic;
             padding: 20px;
             grid-column: 1 / -1;
         }
 
-        .inga-resultat.hidden {
-            display: none;
-        }
+        .hidden { display: none; }
 
-        /* Flytande Dark Mode-Knapp */
         .darkmode-btn {
             position: fixed;
             bottom: 20px;
@@ -306,11 +203,6 @@ document.addEventListener('DOMContentLoaded', function() {
             align-items: center;
             justify-content: center;
             z-index: 1000;
-            transition: transform 0.1s;
-        }
-
-        .darkmode-btn:active {
-            transform: scale(0.9);
         }
     </style>
 </head>
@@ -331,7 +223,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         <div class="sök-container">
             <span class="sök-ikon">🔍</span>
-            <input type="text" id="sök-input" class="sök-fält" placeholder="Sök på stad eller ort (t.ex. Marstrand)...">
+            <input type="text" id="sök-input" class="sök-fält" placeholder="Sök på stad eller ort...">
         </div>
 
         <div id="rutt-lista" class="rutt-grid">
@@ -342,7 +234,7 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
 
     <script>
-        // Initiera mörkt läge baserat på sparad inställning
+        // 1. Initiera mörkt läge
         if (localStorage.getItem('mörkt_tema') === 'true') {
             document.body.classList.add('dark-theme');
         }
@@ -352,6 +244,7 @@ document.addEventListener('DOMContentLoaded', function() {
             localStorage.setItem('mörkt_tema', document.body.classList.contains('dark-theme'));
         });
 
+        // 2. Ladda rutter och hantera URL-parametrar
         fetch('rutter.csv')
             .then(response => response.text())
             .then(data => {
@@ -381,6 +274,39 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 document.getElementById('rutt-lista').innerHTML = gridHtml || '<div class="laddar">Inga rutter hittades.</div>';
                 
+                // --- NU KÖR VI PARAMETER-LOGIKEN (När korten finns i DOM) ---
+                const params = new URLSearchParams(window.location.search);
+                const fran = params.get('fran');
+                const till = params.get('till');
+
+                if (fran && till) {
+                    const sökInput = document.getElementById('sök-input');
+                    const tomMeddelande = document.getElementById('tom-sökning');
+                    const kort = document.querySelectorAll('.rutt-kort');
+                    
+                    const sökSträng = (fran + " " + till).toLowerCase();
+                    if (sökInput) sökInput.value = fran + " " + till;
+
+                    let synligaKort = 0;
+                    kort.forEach(r => {
+                        const sökText = r.getAttribute('data-search');
+                        if (sökText && sökText.includes(sökSträng)) {
+                            r.classList.remove('hidden');
+                            synligaKort++;
+                        } else {
+                            r.classList.add('hidden');
+                        }
+                    });
+
+                    if (synligaKort === 0) {
+                        tomMeddelande.classList.remove('hidden');
+                    } else {
+                        tomMeddelande.classList.add('hidden');
+                    }
+
+                    document.title = "Pendling " + fran + " till " + till;
+                }
+
                 initieraSökfunktion();
                 initieraKlickHistorik();
                 uppdateraHistorikVy();
@@ -389,6 +315,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('rutt-lista').innerHTML = '<div class="laddar">Kunde inte ladda rutter.</div>';
             });
 
+        // 3. Hjälpfunktioner
         function sparaTillHistorik(typ, text, url = '#') {
             let historik = JSON.parse(localStorage.getItem('pendel_historik')) || [];
             const nu = new Date();
@@ -419,7 +346,6 @@ document.addEventListener('DOMContentLoaded', function() {
             historik.forEach((h, index) => {
                 const ikon = h.typ === 'sökning' ? '🔍' : '🛣️';
                 const prefix = h.typ === 'sökning' ? 'Sökte efter: ' : 'Klickade: ';
-                
                 const item = document.createElement('a');
                 item.href = h.url;
                 item.className = `historik-item pos-${index}`;
@@ -443,12 +369,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
         function initieraSökfunktion() {
             const sökInput = document.getElementById('sök-input');
-            const kort = document.querySelectorAll('.rutt-kort');
             const tomMeddelande = document.getElementById('tom-sökning');
             let sökTimeout;
 
             sökInput.addEventListener('input', function() {
                 const sökOrd = this.value.toLowerCase().trim();
+                const kort = document.querySelectorAll('.rutt-kort');
                 let synligaKort = 0;
 
                 kort.forEach(r => {
