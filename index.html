@@ -1,34 +1,55 @@
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function() {
     // 1. Hämta parametrar från URL:en
     const params = new URLSearchParams(window.location.search);
     const fran = params.get('fran');
     const till = params.get('till');
 
-    // 2. Kontrollera om parametrar finns
+    // Kör bara om båda parametrar finns
     if (fran && till) {
-      // Fyll i dina sökfält (bytt ut ID:n mot dina faktiska ID:n i HTML:en)
-      const franInput = document.getElementById('fran-input'); // Ändra till ditt ID
-      const tillInput = document.getElementById('till-input'); // Ändra till ditt ID
-      
-      if (franInput) franInput.value = fran;
-      if (tillInput) tillInput.value = till;
+        const sökInput = document.getElementById('sök-input');
+        const tomMeddelande = document.getElementById('tom-sökning');
+        const kort = document.querySelectorAll('.rutt-kort');
+        
+        // 2. Fyll i sökrutan med "Stockholm Malmö" (eller vad du föredrar)
+        // Vi slår ihop dem till en sträng eftersom din funktion söker efter en textsträng
+        const sökSträng = (fran + " " + till).toLowerCase();
+        
+        if (sökInput) {
+            sökInput.value = sökSträng; // Fyll i rutan synligt
+        }
 
-      // 3. TRIGGERA DIN SÖKFUNKTION
-      // Byt ut 'searchRoutes' mot namnet på din funktion som gör sökningen
-      // Om du inte har en specifik funktion, kopiera logiken som körs när man klickar på "Sök"
-      if (typeof searchRoutes === 'function') {
-        searchRoutes(fran, till); 
-      } else {
-        console.log("Kör din söklogik här med fran:", fran, "och till:", till);
-        // Exempel: document.querySelector('button[type="submit"]').click(); 
-      }
-      
-      // 4. (Valfritt men bra för SEO) Uppdatera sidans titel
-      document.title = "Pendling " + fran + " till " + till;
+        // 3. KÖR SÖKLOGIKEN MANUELLT (kopierad från din initieraSökfunktion)
+        // Vi hoppar över 'addEventListener' och kör koden direkt:
+        const sökOrd = sökSträng; 
+        let synligaKort = 0;
+
+        kort.forEach(r => {
+            const sökText = r.getAttribute('data-search');
+            // Säkerhetskontroll så att sökText finns
+            if (sökText && sökText.includes(sökOrd)) {
+                r.classList.remove('hidden');
+                synligaKort++;
+            } else {
+                r.classList.add('hidden');
+            }
+        });
+
+        // Hantera "inget resultat"-meddelande
+        if (tomMeddelande) {
+            if (synligaKort === 0) {
+                tomMeddelande.style.display = 'block';
+            } else {
+                tomMeddelande.style.display = 'none';
+            }
+        }
+        
+        // Uppdatera titeln för SEO
+        document.title = "Pendling " + fran + " till " + till;
+        console.log("Auto-sök utförd för:", fran, till, "- Synliga kort:", synligaKort);
     }
-  });
-</script>   
+});
+</script>      
 
 <!DOCTYPE html>
 <html lang="sv">
