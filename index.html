@@ -1,3 +1,35 @@
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // 1. Hämta parametrar från URL:en
+    const params = new URLSearchParams(window.location.search);
+    const fran = params.get('fran');
+    const till = params.get('till');
+
+    // 2. Kontrollera om parametrar finns
+    if (fran && till) {
+      // Fyll i dina sökfält (bytt ut ID:n mot dina faktiska ID:n i HTML:en)
+      const franInput = document.getElementById('fran-input'); // Ändra till ditt ID
+      const tillInput = document.getElementById('till-input'); // Ändra till ditt ID
+      
+      if (franInput) franInput.value = fran;
+      if (tillInput) tillInput.value = till;
+
+      // 3. TRIGGERA DIN SÖKFUNKTION
+      // Byt ut 'searchRoutes' mot namnet på din funktion som gör sökningen
+      // Om du inte har en specifik funktion, kopiera logiken som körs när man klickar på "Sök"
+      if (typeof searchRoutes === 'function') {
+        searchRoutes(fran, till); 
+      } else {
+        console.log("Kör din söklogik här med fran:", fran, "och till:", till);
+        // Exempel: document.querySelector('button[type="submit"]').click(); 
+      }
+      
+      // 4. (Valfritt men bra för SEO) Uppdatera sidans titel
+      document.title = "Pendling " + fran + " till " + till;
+    }
+  });
+</script>   
+
 <!DOCTYPE html>
 <html lang="sv">
 <head>
