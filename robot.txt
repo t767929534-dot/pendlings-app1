@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: workers.dev
+Sitemap: https://pendlings-app1.t-767929534-cloudflare.workers.dev/sitemap.xml   
