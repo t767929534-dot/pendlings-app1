@@ -1,3 +1,56 @@
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 1. Hämta parametrar från URL:en
+    const params = new URLSearchParams(window.location.search);
+    const fran = params.get('fran');
+    const till = params.get('till');
+
+    // Kör bara om båda parametrar finns
+    if (fran && till) {
+        const sökInput = document.getElementById('sök-input');
+        const tomMeddelande = document.getElementById('tom-sökning');
+        const kort = document.querySelectorAll('.rutt-kort');
+        
+        // 2. Fyll i sökrutan med "Stockholm Malmö" (eller vad du föredrar)
+        // Vi slår ihop dem till en sträng eftersom din funktion söker efter en textsträng
+        const sökSträng = (fran + " " + till).toLowerCase();
+        
+        if (sökInput) {
+            sökInput.value = sökSträng; // Fyll i rutan synligt
+        }
+
+        // 3. KÖR SÖKLOGIKEN MANUELLT (kopierad från din initieraSökfunktion)
+        // Vi hoppar över 'addEventListener' och kör koden direkt:
+        const sökOrd = sökSträng; 
+        let synligaKort = 0;
+
+        kort.forEach(r => {
+            const sökText = r.getAttribute('data-search');
+            // Säkerhetskontroll så att sökText finns
+            if (sökText && sökText.includes(sökOrd)) {
+                r.classList.remove('hidden');
+                synligaKort++;
+            } else {
+                r.classList.add('hidden');
+            }
+        });
+
+        // Hantera "inget resultat"-meddelande
+        if (tomMeddelande) {
+            if (synligaKort === 0) {
+                tomMeddelande.style.display = 'block';
+            } else {
+                tomMeddelande.style.display = 'none';
+            }
+        }
+        
+        // Uppdatera titeln för SEO
+        document.title = "Pendling " + fran + " till " + till;
+        console.log("Auto-sök utförd för:", fran, till, "- Synliga kort:", synligaKort);
+    }
+});
+</script>      
+
 <!DOCTYPE html>
 <html lang="sv">
 <head>
@@ -21,6 +74,7 @@
             --ikon-bg: #edf2f7;
         }
 
+        /* Dark Mode-klasser */
         body.dark-theme {
             --bg-color: #121212;
             --card-bg: #1e1e1e;
@@ -33,7 +87,11 @@
             --shadow: 0 4px 6px rgba(0,0,0,0.3);
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -52,6 +110,7 @@
             border-radius: var(--radius);
             box-shadow: var(--shadow);
             border-top: 5px solid var(--accent-color);
+            transition: background-color 0.3s, box-shadow 0.3s;
         }
 
         header {
@@ -61,8 +120,16 @@
             padding-bottom: 20px;
         }
 
-        h1 { color: var(--primary-color); font-size: 1.8rem; margin-bottom: 5px; }
-        .subtitle { color: var(--text-light); font-size: 0.95rem; }
+        h1 {
+            color: var(--primary-color);
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            color: var(--text-light);
+            font-size: 0.95rem;
+        }
 
         .historik-box {
             margin-bottom: 25px;
@@ -77,9 +144,14 @@
             color: var(--primary-color);
             margin-bottom: 10px;
             text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
-        .historik-lista { display: flex; flex-direction: column; gap: 8px; }
+        .historik-lista {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
 
         .historik-item {
             display: flex;
@@ -91,13 +163,27 @@
             font-size: 0.9rem;
             text-decoration: none;
             font-weight: 500;
+            transition: opacity 0.2s;
+        }
+
+        .historik-item:hover {
+            opacity: 0.9;
+        }
+
+        .historik-tid {
+            font-size: 0.75rem;
+            opacity: 0.85;
+            font-weight: normal;
         }
 
         .historik-item.pos-0 { background-color: #2c3e50; border-left: 5px solid var(--accent-color); }
         .historik-item.pos-1 { background-color: #4a6572; }
         .historik-item.pos-2 { background-color: #708090; }
 
-        .sök-container { margin-bottom: 25px; position: relative; }
+        .sök-container {
+            margin-bottom: 25px;
+            position: relative;
+        }
 
         .sök-fält {
             width: 100%;
@@ -108,6 +194,11 @@
             color: var(--text-color);
             border-radius: var(--radius);
             outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .sök-fält:focus {
+            border-color: var(--primary-color);
         }
 
         .sök-ikon {
@@ -116,6 +207,7 @@
             top: 50%;
             transform: translateY(-50%);
             color: var(--text-light);
+            font-size: 1rem;
         }
 
         .rutt-grid {
@@ -125,7 +217,9 @@
         }
 
         @media (min-width: 600px) {
-            .rutt-grid { grid-template-columns: repeat(2, 1fr); }
+            .rutt-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
         }
 
         .rutt-kort {
@@ -140,11 +234,14 @@
             transition: all 0.2s ease-in-out;
         }
 
-        .rutt-kort.hidden { display: none !important; }
+        .rutt-kort.hidden {
+            display: none !important;
+        }
 
         .rutt-kort:hover {
             transform: translateY(-2px);
             border-color: var(--accent-color);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
             background: var(--card-bg);
         }
 
@@ -155,25 +252,44 @@
             padding: 10px;
             border-radius: 50%;
             display: flex;
-            width: 45px;
-            height: 45px;
             align-items: center;
             justify-content: center;
+            width: 45px;
+            height: 45px;
         }
 
-        .rutt-info { flex-grow: 1; }
-        .rutt-titel { font-weight: 600; color: var(--primary-color); }
-        .rutt-detalj { font-size: 0.85rem; color: var(--text-light); }
+        .rutt-info {
+            flex-grow: 1;
+        }
+
+        .rutt-titel {
+            font-weight: 600;
+            color: var(--primary-color);
+            font-size: 1rem;
+        }
+
+        .rutt-detalj {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 2px;
+        }
 
         .laddar, .inga-resultat {
             text-align: center;
             color: var(--text-light);
+            font-style: italic;
             padding: 20px;
             grid-column: 1 / -1;
         }
 
-        .hidden { display: none; }
+        .inga-resultat.hidden {
+            display: none;
+        }
 
+        /* Flytande Dark Mode-Knapp */
         .darkmode-btn {
             position: fixed;
             bottom: 20px;
@@ -184,7 +300,17 @@
             padding: 12px;
             border-radius: 50%;
             cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             z-index: 1000;
+            transition: transform 0.1s;
+        }
+
+        .darkmode-btn:active {
+            transform: scale(0.9);
         }
     </style>
 </head>
@@ -205,18 +331,18 @@
 
         <div class="sök-container">
             <span class="sök-ikon">🔍</span>
-            <input type="text" id="sök-input" class="sök-fält" placeholder="Sök på stad eller ort...">
+            <input type="text" id="sök-input" class="sök-fält" placeholder="Sök på stad eller ort (t.ex. Marstrand)...">
         </div>
 
         <div id="rutt-lista" class="rutt-grid">
-            <div class="laddar">Laddar rutter...</div>
+            <div class="laddar">Laddar Karl-Johan Gyllenstormś rutter...</div>
         </div>
         
         <div id="tom-sökning" class="inga-resultat hidden">Inga rutter matchar sökningen.</div>
     </div>
 
     <script>
-        // Mörkt läge inställningar
+        // Initiera mörkt läge baserat på sparad inställning
         if (localStorage.getItem('mörkt_tema') === 'true') {
             document.body.classList.add('dark-theme');
         }
@@ -226,7 +352,6 @@
             localStorage.setItem('mörkt_tema', document.body.classList.contains('dark-theme'));
         });
 
-        // HÄMTA DATA OCH HANTERA RUTTER
         fetch('rutter.csv')
             .then(response => response.text())
             .then(data => {
@@ -240,8 +365,7 @@
                         let mal = kolumner[1].trim();
                         if(!start || !mal) return;
 
-                        // Använd "?" istället för "rutt.html?" om du vill stanna på samma sida (index)
-                        let urlVänlig = `?fran=${encodeURIComponent(start)}&till=${encodeURIComponent(mal)}`;
+                        let urlVänlig = `rutt.html?fran=${encodeURIComponent(start)}&till=${encodeURIComponent(mal)}`;
                         
                         gridHtml += `
                             <a href="${urlVänlig}" class="rutt-kort" data-search="${start.toLowerCase()} ${mal.toLowerCase()}" data-start="${start}" data-mal="${mal}">
@@ -257,9 +381,6 @@
                 
                 document.getElementById('rutt-lista').innerHTML = gridHtml || '<div class="laddar">Inga rutter hittades.</div>';
                 
-                // --- VIKTIGT: Kör URL-kontrollen HÄR efter att korten skapats ---
-                checkUrlParameters();
-                
                 initieraSökfunktion();
                 initieraKlickHistorik();
                 uppdateraHistorikVy();
@@ -267,39 +388,6 @@
             .catch(err => {
                 document.getElementById('rutt-lista').innerHTML = '<div class="laddar">Kunde inte ladda rutter.</div>';
             });
-
-        function checkUrlParameters() {
-            const params = new URLSearchParams(window.location.search);
-            const fran = params.get('fran');
-            const till = params.get('till');
-
-            if (fran && till) {
-                const sökInput = document.getElementById('sök-input');
-                const sökOrd = (fran + " " + till).toLowerCase();
-                const kort = document.querySelectorAll('.rutt-kort');
-                let synligaKort = 0;
-
-                if (sökInput) sökInput.value = fran + " " + till;
-
-                kort.forEach(r => {
-                    const sökText = r.getAttribute('data-search');
-                    // Vi kollar om kortet matchar både start och mål
-                    if (sökText.includes(fran.toLowerCase()) && sökText.includes(till.toLowerCase())) {
-                        r.classList.remove('hidden');
-                        synligaKort++;
-                    } else {
-                        r.classList.add('hidden');
-                    }
-                });
-
-                if (synligaKort > 0) {
-                    document.title = "Pendling " + fran + " till " + till;
-                    document.getElementById('tom-sökning').classList.add('hidden');
-                } else {
-                    document.getElementById('tom-sökning').classList.remove('hidden');
-                }
-            }
-        }
 
         function sparaTillHistorik(typ, text, url = '#') {
             let historik = JSON.parse(localStorage.getItem('pendel_historik')) || [];
@@ -336,6 +424,15 @@
                 item.href = h.url;
                 item.className = `historik-item pos-${index}`;
                 
+                if(h.url === '#') {
+                    item.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const sökFält = document.getElementById('sök-input');
+                        sökFält.value = h.text;
+                        sökFält.dispatchEvent(new Event('input'));
+                    });
+                }
+
                 item.innerHTML = `
                     <span>${ikon} <strong>${prefix}</strong> "${h.text}"</span>
                     <span class="historik-tid">${h.tid}</span>
@@ -346,12 +443,12 @@
 
         function initieraSökfunktion() {
             const sökInput = document.getElementById('sök-input');
+            const kort = document.querySelectorAll('.rutt-kort');
             const tomMeddelande = document.getElementById('tom-sökning');
             let sökTimeout;
 
             sökInput.addEventListener('input', function() {
                 const sökOrd = this.value.toLowerCase().trim();
-                const kort = document.querySelectorAll('.rutt-kort');
                 let synligaKort = 0;
 
                 kort.forEach(r => {
