@@ -319,3 +319,208 @@
                     <div class="stapel-ram"><div class="stapel-fyllning extrem"></div></div>
                     <div class="status-text">Maxtopp</div>
                 </div>
+                <div class="tids-block">
+                    <div class="klockslag">09:00 - 15:00</div>
+                    <div class="stapel-ram"><div class="stapel-fyllning lugnt"></div></div>
+                    <div class="status-text">Gles trafik</div>
+                </div>
+                <div class="tids-block">
+                    <div class="klockslag">15:30 - 17:30</div>
+                    <div class="stapel-ram"><div class="stapel-fyllning extrem"></div></div>
+                    <div class="status-text">Maxtopp</div>
+                </div>
+                <div class="tids-block">
+                    <div class="klockslag">18:00 - 20:00</div>
+                    <div class="stapel-ram"><div class="stapel-fyllning hög"></div></div>
+                    <div class="status-text">Minskande</div>
+                </div>
+            </div>
+            <div class="analys-footer">
+                * Baserat på genomsnittlig mätdata från Trafikverket för pendlingsstråk kring storstadsregioner.
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // 1. Initiera mörkt läge
+        if (localStorage.getItem('mörkt_tema') === 'true') {
+            document.body.classList.add('dark-theme');
+        }
+
+        document.getElementById('darkmode-toggle').addEventListener('click', () => {
+            document.body.classList.toggle('dark-theme');
+            localStorage.setItem('mörkt_tema', document.body.classList.contains('dark-theme'));
+        });
+
+        // 2. Ladda rutter och hantera URL-parametrar
+        fetch('rutter.csv')
+            .then(response => response.text())
+            .then(data => {
+                let rader = data.split(/\r?\n/).slice(1);
+                let gridHtml = '';
+                
+                rader.forEach(rad => {
+                    let kolumner = rad.split(',');
+                    if(kolumner.length >= 2) {
+                        let start = kolumner[0].trim();
+                        let mal = kolumner[1].trim();
+                        if(!start || !mal) return;
+
+                        let urlVänlig = `rutt.html?fran=${encodeURIComponent(start)}&till=${encodeURIComponent(mal)}`;
+                        
+                        gridHtml += `
+                            <a href="${urlVänlig}" class="rutt-kort" data-search="${start.toLowerCase()} ${mal.toLowerCase()}" data-start="${start}" data-mal="${mal}">
+                                <div class="ikon-box">📍</div>
+                                <div class="rutt-info">
+                                    <div class="rutt-titel">${start} ➔ ${mal}</div>
+                                    <div class="rutt-detalj">🚗 Pendla med bil</div>
+                                </div>
+                            </a>
+                        `;
+                    }
+                });
+                
+                document.getElementById('rutt-lista').innerHTML = gridHtml || '<div class="laddar">Inga rutter hittades.</div>';
+                
+                // --- NU KÖR VI PARAMETER-LOGIKEN (När korten finns i DOM) ---
+                const params = new URLSearchParams(window.location.search);
+                const fran = params.get('fran');
+                const till = params.get('till');
+
+                if (fran && till) {
+                    const sökInput = document.getElementById('sök-input');
+                    const tomMeddelande = document.getElementById('tom-sökning');
+                    const kort = document.querySelectorAll('.rutt-kort');
+                    
+                    const sökSträng = (fran + " " + till).toLowerCase();
+                    if (sökInput) sökInput.value = fran + " " + till;
+
+                    let synligaKort = 0;
+                    kort.forEach(r => {
+                        const sökText = r.getAttribute('data-search');
+                        if (sökText && sökText.includes(sökSträng)) {
+                            r.classList.remove('hidden');
+                            synligaKort++;
+                        } else {
+                            r.classList.add('hidden');
+                        }
+                    });
+
+                    if (synligaKort === 0) {
+                        tomMeddelande.classList.remove('hidden');
+                    } else {
+                        tomMeddelande.classList.add('hidden');
+                    }
+
+                    document.title = "Pendling " + fran + " till " + till;
+                }
+
+                initieraSökfunktion();
+                initieraKlickHistorik();
+                uppdateraHistorikVy();
+            })
+            .catch(err => {
+                document.getElementById('rutt-lista').innerHTML = '<div class="laddar">Kunde inte ladda rutter.</div>';
+            });
+
+        // 3. Hjälpfunktioner
+        function sparaTillHistorik(typ, text, url = '#') {
+            let historik = JSON.parse(localStorage.getItem('pendel_historik')) || [];
+            const nu = new Date();
+            const tidsstämpel = `${nu.toLocaleDateString('sv-SE')} kl. ${nu.toLocaleTimeString('sv-SE', {hour: '2-digit', minute:'2-digit'})}`;
+            
+            const nyHändelse = { typ, text, url, tid: tidsstämpel, id: Date.now() };
+            historik = historik.filter(h => !(h.text === text && h.typ === typ));
+            historik.unshift(nyHändelse);
+            historik = historik.slice(0, 3);
+            
+            localStorage.setItem('pendel_historik', JSON.stringify(historik));
+            uppdateraHistorikVy();
+        }
+
+        function uppdateraHistorikVy() {
+            const historik = JSON.parse(localStorage.getItem('pendel_historik')) || [];
+            const box = document.getElementById('historik-sektion');
+            const lista = document.getElementById('historik-lista');
+            
+            if (historik.length === 0) {
+                box.style.display = 'none';
+                return;
+            }
+            
+            box.style.display = 'block';
+            lista.innerHTML = '';
+            
+            historik.forEach((h, index) => {
+                const ikon = h.typ === 'sökning' ? '🔍' : '🛣️';
+                const prefix = h.typ === 'sökning' ? 'Sökte efter: ' : 'Klickade: ';
+                const item = document.createElement('a');
+                item.href = h.url;
+                item.className = `historik-item pos-${index}`;
+                
+                if(h.url === '#') {
+                    item.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const sökFält = document.getElementById('sök-input');
+                        sökFält.value = h.text;
+                        sökFält.dispatchEvent(new Event('input'));
+                    });
+                }
+
+                item.innerHTML = `
+                    <span>${ikon} <strong>${prefix}</strong> "${h.text}"</span>
+                    <span class="historik-tid">${h.tid}</span>
+                `;
+                lista.appendChild(item);
+            });
+        }
+
+        function initieraSökfunktion() {
+            const sökInput = document.getElementById('sök-input');
+            const tomMeddelande = document.getElementById('tom-sökning');
+            let sökTimeout;
+
+            sökInput.addEventListener('input', function() {
+                const sökOrd = this.value.toLowerCase().trim();
+                const kort = document.querySelectorAll('.rutt-kort');
+                let synligaKort = 0;
+
+                kort.forEach(r => {
+                    const sökText = r.getAttribute('data-search');
+                    if (sökText.includes(sökOrd)) {
+                        r.classList.remove('hidden');
+                        synligaKort++;
+                    } else {
+                        r.classList.add('hidden');
+                    }
+                });
+
+                if (synligaKort === 0 && sökOrd !== '') {
+                    tomMeddelande.classList.remove('hidden');
+                } else {
+                    tomMeddelande.classList.add('hidden');
+                }
+
+                clearTimeout(sökTimeout);
+                if (sökOrd.length >= 2) {
+                    sökTimeout = setTimeout(() => {
+                        sparaTillHistorik('sökning', sökInput.value.trim());
+                    }, 1000);
+                }
+            });
+        }
+
+        function initieraKlickHistorik() {
+            const kort = document.querySelectorAll('.rutt-kort');
+            kort.forEach(k => {
+                k.addEventListener('click', function() {
+                    const start = this.getAttribute('data-start');
+                    const mal = this.getAttribute('data-mal');
+                    const url = this.getAttribute('href');
+                    sparaTillHistorik('rutt', `${start} till ${mal}`, url);
+                });
+            });
+        }
+    </script>
+</body>
+</html>
