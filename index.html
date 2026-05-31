@@ -204,80 +204,6 @@
             justify-content: center;
             z-index: 1000;
         }
-
-        /* --- STYLES FÖR DEN NYA TRAFIKSEKTIONEN --- */
-        .trafik-analys {
-            margin-top: 10px;
-            padding: 25px;
-            background: var(--block-bg);
-            border-radius: var(--radius);
-            border: 1px solid var(--border-color);
-        }
-
-        .trafik-analys h3 {
-            font-size: 1.1rem;
-            color: var(--primary-color);
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .intensitet-container {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .tids-block {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .klockslag {
-            min-width: 90px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            color: var(--text-color);
-        }
-
-        .stapel-ram {
-            flex-grow: 1;
-            height: 12px;
-            background: var(--ikon-bg);
-            border-radius: 10px;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .stapel-fyllning {
-            height: 100%;
-            border-radius: 10px;
-            transition: width 1s ease-in-out;
-        }
-
-        .lugnt { width: 15%; background: #2ecc71; }
-        .medel { width: 45%; background: #f1c40f; }
-        .hög { width: 85%; background: #e67e22; }
-        .extrem { width: 100%; background: #e74c3c; box-shadow: 0 0 10px rgba(231, 76, 60, 0.4); }
-
-        .status-text {
-            min-width: 80px;
-            font-size: 0.8rem;
-            text-align: right;
-            font-weight: 500;
-            color: var(--text-light);
-        }
-
-        .analys-footer {
-            margin-top: 15px;
-            font-size: 0.8rem;
-            color: var(--text-light);
-            font-style: italic;
-            border-top: 1px solid var(--border-color);
-            padding-top: 10px;
-        }
     </style>
 </head>
 <body>
@@ -305,40 +231,6 @@
         </div>
         
         <div id="tom-sökning" class="inga-resultat hidden">Inga rutter matchar sökningen.</div>
-
-        <section class="trafik-analys">
-            <h3>📊 Trafikens intensitet (Vardagar)</h3>
-            <div class="intensitet-container">
-                <div class="tids-block">
-                    <div class="klockslag">06:00 - 07:00</div>
-                    <div class="stapel-ram"><div class="stapel-fyllning medel"></div></div>
-                    <div class="status-text">Ökande</div>
-                </div>
-                <div class="tids-block">
-                    <div class="klockslag">07:00 - 08:30</div>
-                    <div class="stapel-ram"><div class="stapel-fyllning extrem"></div></div>
-                    <div class="status-text">Maxtopp</div>
-                </div>
-                <div class="tids-block">
-                    <div class="klockslag">09:00 - 15:00</div>
-                    <div class="stapel-ram"><div class="stapel-fyllning lugnt"></div></div>
-                    <div class="status-text">Gles trafik</div>
-                </div>
-                <div class="tids-block">
-                    <div class="klockslag">15:30 - 17:30</div>
-                    <div class="stapel-ram"><div class="stapel-fyllning extrem"></div></div>
-                    <div class="status-text">Maxtopp</div>
-                </div>
-                <div class="tids-block">
-                    <div class="klockslag">18:00 - 20:00</div>
-                    <div class="stapel-ram"><div class="stapel-fyllning hög"></div></div>
-                    <div class="status-text">Minskande</div>
-                </div>
-            </div>
-            <div class="analys-footer">
-                * Baserat på genomsnittlig mätdata från Trafikverket för pendlingsstråk kring storstadsregioner.
-            </div>
-        </section>
     </div>
 
     <script>
@@ -524,3 +416,4 @@
     </script>
 </body>
 </html>
+
