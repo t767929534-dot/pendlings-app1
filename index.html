@@ -185,7 +185,7 @@
 
         .hidden { display: none !important; }
 
-        /* Stil för paginering */
+        /* Paginering-stilar */
         .paginering {
             display: flex;
             justify-content: center;
@@ -262,7 +262,7 @@
         </div>
 
         <div id="rutt-lista" class="rutt-grid">
-            <div class="laddar">Laddar Karl-Johan Gyllenstormś rutter...</div>
+            <div id="laddnings-text" class="laddar">Laddar Karl-Johan Gyllenstormś rutter...</div>
         </div>
         
         <div id="tom-sökning" class="inga-resultat hidden">Inga rutter matchar sökningen.</div>
@@ -271,13 +271,12 @@
     </div>
 
     <script>
-        // Globala variabler för att hantera data och paginering
         let allaRutter = [];
         let filtreradeRutter = [];
         let nuvarandeSida = 1;
-        const raderPerSida = 20; // Ändra här om du vill visa fler eller färre rutter per sida
+        const raderPerSida = 20;
 
-        // 1. Initiera mörkt läge
+        // 1. Mörkt läge
         if (localStorage.getItem('mörkt_tema') === 'true') {
             document.body.classList.add('dark-theme');
         }
@@ -287,31 +286,41 @@
             localStorage.setItem('mörkt_tema', document.body.classList.contains('dark-theme'));
         });
 
-        // 2. Ladda rutter och hantera URL-parametrar
+        // 2. Data-hämtning med inbyggd felsökning för Cloudflare
         const ruttListaElement = document.getElementById('rutt-lista');
 
         fetch('rutter.csv')
             .then(response => {
-                // Kolla om servern faktiskt hittar filen
                 if (!response.ok) {
-                    throw new Error(`Servern svarade med status ${response.status} (${response.statusText}). Kontrollera att filnamnet rutter.csv stämmer exakt med stora/små bokstäver på GitHub.`);
+                    throw new Error(`Kunde inte ladda filen. Status: ${response.status} (${response.statusText}). Se till att filnamnet är exakt rutter.csv med små bokstäver på GitHub.`);
                 }
                 return response.text();
             })
             .then(data => {
-                // Delar upp raderna och rensar tomma rader
+                // Dela upp rader oavsett om det är Windows (\r\n) eller Linux (\n)
                 let rader = data.split(/\r?\n/).filter(line => line.trim() !== "");
                 
-                // Hoppa över rubrikraden (start,mal) om den finns
-                if (rader.length > 0) rader = rader.slice(1);
-                
-                // Strukturera upp all data i arrayen
-                rader.forEach((rad, index) => {
-                    // Om din fil använder semikolon, ändra ',' till ';' här under
-                    let kolumner = rad.split(',');
+                if (rader.length === 0) {
+                    throw new Error("CSV-filen är helt tom.");
+                }
+
+                // Kolla om filen använder kommatecken eller semikolon
+                let separator = ',';
+                if (rader[0].includes(';') && !rader[0].includes(',')) {
+                    separator = ';';
+                }
+
+                // Hoppa över rubrikraden (om första raden innehåller text som "start" eller "mal")
+                if (rader.length > 1 && (rader[0].toLowerCase().includes('start') || rader[0].toLowerCase().includes('från'))) {
+                    rader = rader.slice(1);
+                }
+
+                rader.forEach(rad => {
+                    let kolumner = rad.split(separator);
                     if(kolumner.length >= 2) {
-                        let start = kolumner[0].trim();
-                        let mal = kolumner[1].trim();
+                        let start = kolumner[0].replace(/"/g, '').trim();
+                        let mal = kolumner[1].replace(/"/g, '').trim();
+                        
                         if(!start || !mal) return;
 
                         allaRutter.push({
@@ -323,15 +332,13 @@
                     }
                 });
 
-                // Kontrollera om vi lyckades läsa några rader överhuvudtaget
                 if (allaRutter.length === 0) {
-                    throw new Error("CSV-filen laddades, men koden kunde inte tolka några rader. Kontrollera att filen är kommaseparerad (inte semikolon).");
+                    throw new Error("CSV-filen lästes in, men koden hittade inga giltiga rader med två kolumner. Kontrollera filens struktur.");
                 }
 
-                // Sätt filtrerade rutter till alla rutter som standard vid start
                 filtreradeRutter = [...allaRutter];
                 
-                // Kolla efter URL-parametrar
+                // Hantera URL-parametrar direkt
                 const params = new URLSearchParams(window.location.search);
                 const fran = params.get('fran');
                 const till = params.get('till');
@@ -345,23 +352,21 @@
                     document.title = "Pendling " + fran + " till " + till;
                 }
 
-                // Rendera gränssnittet
                 visaSida(1);
                 initieraSökfunktion();
                 uppdateraHistorikVy();
             })
             .catch(err => {
-                // Visar felmeddelandet tydligt på skärmen om något kraschar
+                // Visar felmeddelandet snyggt direkt i listan
                 ruttListaElement.innerHTML = `
-                    <div class="laddar" style="color: #e74c3c; font-weight: bold;">
-                        ⚠️ Ett fel uppstod:<br>
-                        <span style="font-family: monospace; font-size: 0.9rem; color: var(--text-color); display: inline-block; margin-top: 10px; text-align: left;">
+                    <div class="laddar" style="color: #e74c3c; font-weight: bold; grid-column: 1/-1;">
+                        ⚠️ Ett fel uppstod vid inläsning:<br>
+                        <span style="font-family: monospace; font-size: 0.9rem; color: var(--text-color); display: inline-block; margin-top: 10px; background: rgba(0,0,0,0.05); padding: 10px; border-radius: 4px; text-align: left; max-width: 100%;">
                             ${err.message}
                         </span>
                     </div>`;
             });
 
-        // Funktion för att rendera en specifik sida av rutter
         function visaSida(sida) {
             nuvarandeSida = sida;
             const ruttLista = document.getElementById('rutt-lista');
@@ -400,7 +405,6 @@
             byggPagineringsKnappar(totalaSidor);
         }
 
-        // Funktion för att generera pagineringsknapparna dynamiskt
         function byggPagineringsKnappar(totalaSidor) {
             const container = document.getElementById('paginering-container');
             if (totalaSidor <= 1) {
@@ -430,4 +434,92 @@
             });
         }
 
-        // Spara historik i Local
+        function sparaTillHistorik(typ, text, url = '#') {
+            let historik = JSON.parse(localStorage.getItem('pendel_historik')) || [];
+            const nu = new Date();
+            const tidsstämpel = `${nu.toLocaleDateString('sv-SE')} kl. ${nu.toLocaleTimeString('sv-SE', {hour: '2-digit', minute:'2-digit'})}`;
+            
+            const nyHändelse = { typ, text, url, tid: tidsstämpel, id: Date.now() };
+            historik = historik.filter(h => !(h.text === text && h.typ === typ));
+            historik.unshift(nyHändelse);
+            historik = historik.slice(0, 3);
+            
+            localStorage.setItem('pendel_historik', JSON.stringify(historik));
+            uppdateraHistorikVy();
+        }
+
+        function uppdateraHistorikVy() {
+            const historik = JSON.parse(localStorage.getItem('pendel_historik')) || [];
+            const box = document.getElementById('historik-sektion');
+            const lista = document.getElementById('historik-lista');
+            
+            if (historik.length === 0) {
+                box.style.display = 'none';
+                return;
+            }
+            
+            box.style.display = 'block';
+            lista.innerHTML = '';
+            
+            historik.forEach((h, index) => {
+                const ikon = h.typ === 'sökning' ? '🔍' : '🛣️';
+                const prefix = h.typ === 'sökning' ? 'Sökte efter: ' : 'Klickade: ';
+                const item = document.createElement('a');
+                item.href = h.url;
+                item.className = `historik-item pos-${index}`;
+                
+                if(h.url === '#') {
+                    item.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const sökFält = document.getElementById('sök-input');
+                        sökFält.value = h.text;
+                        sökFält.dispatchEvent(new Event('input'));
+                    });
+                }
+
+                item.innerHTML = `
+                    <span>${ikon} <strong>${prefix}</strong> "${h.text}"</span>
+                    <span class="historik-tid">${h.tid}</span>
+                `;
+                lista.appendChild(item);
+            });
+        }
+
+        function initieraSökfunktion() {
+            const sökInput = document.getElementById('sök-input');
+            let sökTimeout;
+
+            sökInput.addEventListener('input', function() {
+                const sökOrd = this.value.toLowerCase().trim();
+
+                if (sökOrd === '') {
+                    filtreradeRutter = [...allaRutter];
+                } else {
+                    filtreradeRutter = allaRutter.filter(r => r.searchString.includes(sökOrd));
+                }
+
+                visaSida(1);
+
+                clearTimeout(sökTimeout);
+                if (sökOrd.length >= 2) {
+                    sökTimeout = setTimeout(() => {
+                        sparaTillHistorik('sökning', sökInput.value.trim());
+                    }, 1000);
+                }
+            });
+        }
+
+        function initieraKlickHistorik() {
+            const kort = document.querySelectorAll('.rutt-kort');
+            kort.forEach(k => {
+                k.addEventListener('click', function() {
+                    const start = this.getAttribute('data-start');
+                    const mal = this.getAttribute('data-mal');
+                    const url = this.getAttribute('href');
+                    sparaTillHistorik('rutt', `${start} till ${mal}`, url);
+                });
+            });
+        }
+    </script>
+</body>
+</html>
