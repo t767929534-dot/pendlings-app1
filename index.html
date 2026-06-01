@@ -275,7 +275,7 @@
         let allaRutter = [];
         let filtreradeRutter = [];
         let nuvarandeSida = 1;
-        const raderPerSida = 20; // Ändra här om du vill visa fler/färre rutter per sida
+        const raderPerSida = 20; // Ändra här om du vill visa fler eller färre rutter per sida
 
         // 1. Initiera mörkt läge
         if (localStorage.getItem('mörkt_tema') === 'true') {
@@ -288,13 +288,26 @@
         });
 
         // 2. Ladda rutter och hantera URL-parametrar
+        const ruttListaElement = document.getElementById('rutt-lista');
+
         fetch('rutter.csv')
-            .then(response => response.text())
+            .then(response => {
+                // Kolla om servern faktiskt hittar filen
+                if (!response.ok) {
+                    throw new Error(`Servern svarade med status ${response.status} (${response.statusText}). Kontrollera att filnamnet rutter.csv stämmer exakt med stora/små bokstäver på GitHub.`);
+                }
+                return response.text();
+            })
             .then(data => {
-                let rader = data.split(/\r?\n/).slice(1);
+                // Delar upp raderna och rensar tomma rader
+                let rader = data.split(/\r?\n/).filter(line => line.trim() !== "");
                 
-                // Strukturera upp all data i en JavaScript-array först
-                rader.forEach(rad => {
+                // Hoppa över rubrikraden (start,mal) om den finns
+                if (rader.length > 0) rader = rader.slice(1);
+                
+                // Strukturera upp all data i arrayen
+                rader.forEach((rad, index) => {
+                    // Om din fil använder semikolon, ändra ',' till ';' här under
                     let kolumner = rad.split(',');
                     if(kolumner.length >= 2) {
                         let start = kolumner[0].trim();
@@ -310,6 +323,11 @@
                     }
                 });
 
+                // Kontrollera om vi lyckades läsa några rader överhuvudtaget
+                if (allaRutter.length === 0) {
+                    throw new Error("CSV-filen laddades, men koden kunde inte tolka några rader. Kontrollera att filen är kommaseparerad (inte semikolon).");
+                }
+
                 // Sätt filtrerade rutter till alla rutter som standard vid start
                 filtreradeRutter = [...allaRutter];
                 
@@ -323,7 +341,6 @@
                     const sökSträng = (fran + " " + till).toLowerCase();
                     if (sökInput) sökInput.value = fran + " " + till;
                     
-                    // Filtrera baserat på URL-parametrar direkt i arrayen
                     filtreradeRutter = allaRutter.filter(r => r.searchString.includes(sökSträng));
                     document.title = "Pendling " + fran + " till " + till;
                 }
@@ -334,7 +351,14 @@
                 uppdateraHistorikVy();
             })
             .catch(err => {
-                document.getElementById('rutt-lista').innerHTML = '<div class="laddar">Kunde inte ladda rutter.</div>';
+                // Visar felmeddelandet tydligt på skärmen om något kraschar
+                ruttListaElement.innerHTML = `
+                    <div class="laddar" style="color: #e74c3c; font-weight: bold;">
+                        ⚠️ Ett fel uppstod:<br>
+                        <span style="font-family: monospace; font-size: 0.9rem; color: var(--text-color); display: inline-block; margin-top: 10px; text-align: left;">
+                            ${err.message}
+                        </span>
+                    </div>`;
             });
 
         // Funktion för att rendera en specifik sida av rutter
@@ -352,7 +376,6 @@
 
             tomMeddelande.classList.add('hidden');
             
-            // Beräkna start- och slutindex för nuvarande sida
             const startIndex = (sida - 1) * raderPerSida;
             const slutIndex = Math.min(startIndex + raderPerSida, filtreradeRutter.length);
             const rutterAttVisa = filtreradeRutter.slice(startIndex, slutIndex);
@@ -371,11 +394,8 @@
             });
 
             ruttLista.innerHTML = gridHtml;
-            
-            // Aktivera klickhistoriken på de nya genererade korten
             initieraKlickHistorik();
             
-            // Uppdatera pagineringskontrollerna
             const totalaSidor = Math.ceil(filtreradeRutter.length / raderPerSida);
             byggPagineringsKnappar(totalaSidor);
         }
@@ -396,103 +416,18 @@
             `;
 
             document.getElementById('prev-page').addEventListener('click', () => {
-                if (nuvarandeSida > 1) visaSida(nuvarandeSida - 1);
+                if (nuvarandeSida > 1) {
+                    visaSida(nuvarandeSida - 1);
+                    window.scrollTo({top: 0, behavior: 'smooth'});
+                }
             });
 
             document.getElementById('next-page').addEventListener('click', () => {
-                if (nuvarandeSida < totalaSidor) visaSida(nuvarandeSida + 1);
-            });
-        }
-
-        // 3. Hjälpfunktioner
-        function sparaTillHistorik(typ, text, url = '#') {
-            let historik = JSON.parse(localStorage.getItem('pendel_historik')) || [];
-            const nu = new Date();
-            const tidsstämpel = `${nu.toLocaleDateString('sv-SE')} kl. ${nu.toLocaleTimeString('sv-SE', {hour: '2-digit', minute:'2-digit'})}`;
-            
-            const nyHändelse = { typ, text, url, tid: tidsstämpel, id: Date.now() };
-            historik = historik.filter(h => !(h.text === text && h.typ === typ));
-            historik.unshift(nyHändelse);
-            historik = historik.slice(0, 3);
-            
-            localStorage.setItem('pendel_historik', JSON.stringify(historik));
-            uppdateraHistorikVy();
-        }
-
-        function uppdateraHistorikVy() {
-            const historik = JSON.parse(localStorage.getItem('pendel_historik')) || [];
-            const box = document.getElementById('historik-sektion');
-            const lista = document.getElementById('historik-lista');
-            
-            if (historik.length === 0) {
-                box.style.display = 'none';
-                return;
-            }
-            
-            box.style.display = 'block';
-            lista.innerHTML = '';
-            
-            historik.forEach((h, index) => {
-                const ikon = h.typ === 'sökning' ? '🔍' : '🛣️';
-                const prefix = h.typ === 'sökning' ? 'Sökte efter: ' : 'Klickade: ';
-                const item = document.createElement('a');
-                item.href = h.url;
-                item.className = `historik-item pos-${index}`;
-                
-                if(h.url === '#') {
-                    item.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        const sökFält = document.getElementById('sök-input');
-                        sökFält.value = h.text;
-                        sökFält.dispatchEvent(new Event('input'));
-                    });
-                }
-
-                item.innerHTML = `
-                    <span>${ikon} <strong>${prefix}</strong> "${h.text}"</span>
-                    <span class="historik-tid">${h.tid}</span>
-                `;
-                lista.appendChild(item);
-            });
-        }
-
-        function initieraSökfunktion() {
-            const sökInput = document.getElementById('sök-input');
-            let sökTimeout;
-
-            sökInput.addEventListener('input', function() {
-                const sökOrd = this.value.toLowerCase().trim();
-
-                // Gör sökningen mot det globala fältet (alla 12 000 rader)
-                if (sökOrd === '') {
-                    filtreradeRutter = [...allaRutter];
-                } else {
-                    filtreradeRutter = allaRutter.filter(r => r.searchString.includes(sökOrd));
-                }
-
-                // Gå alltid tillbaka till sidan 1 vid ny sökning
-                visaSida(1);
-
-                clearTimeout(sökTimeout);
-                if (sökOrd.length >= 2) {
-                    sökTimeout = setTimeout(() => {
-                        sparaTillHistorik('sökning', sökInput.value.trim());
-                    }, 1000);
+                if (nuvarandeSida < totalaSidor) {
+                    visaSida(nuvarandeSida + 1);
+                    window.scrollTo({top: 0, behavior: 'smooth'});
                 }
             });
         }
 
-        function initieraKlickHistorik() {
-            const kort = document.querySelectorAll('.rutt-kort');
-            kort.forEach(k => {
-                k.addEventListener('click', function() {
-                    const start = this.getAttribute('data-start');
-                    const mal = this.getAttribute('data-mal');
-                    const url = this.getAttribute('href');
-                    sparaTillHistorik('rutt', `${start} till ${mal}`, url);
-                });
-            });
-        }
-    </script>
-</body>
-</html>
+        // Spara historik i Local
