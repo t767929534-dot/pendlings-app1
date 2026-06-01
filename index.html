@@ -159,6 +159,8 @@
             transition: all 0.2s ease-in-out;
         }
 
+        .rutt-kort.hidden { display: none !important; }
+
         .ikon-box {
             font-size: 1.5rem;
             margin-right: 15px;
@@ -183,44 +185,7 @@
             grid-column: 1 / -1;
         }
 
-        .hidden { display: none !important; }
-
-        /* Paginering-stilar */
-        .paginering {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-            margin-top: 25px;
-            padding-top: 15px;
-            border-top: 1px solid var(--border-color);
-        }
-
-        .paginering-btn {
-            background: var(--block-bg);
-            color: var(--text-color);
-            border: 1px solid var(--border-color);
-            padding: 8px 16px;
-            border-radius: var(--radius);
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.2s;
-        }
-
-        .paginering-btn:hover:not(:disabled) {
-            background: var(--accent-color);
-            color: #000;
-        }
-
-        .paginering-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .paginering-info {
-            font-size: 0.9rem;
-            color: var(--text-light);
-        }
+        .hidden { display: none; }
 
         .darkmode-btn {
             position: fixed;
@@ -262,21 +227,14 @@
         </div>
 
         <div id="rutt-lista" class="rutt-grid">
-            <div id="laddnings-text" class="laddar">Laddar Karl-Johan Gyllenstormś rutter...</div>
+            <div class="laddar">Laddar Karl-Johan Gyllenstormś rutter...</div>
         </div>
         
         <div id="tom-sökning" class="inga-resultat hidden">Inga rutter matchar sökningen.</div>
-
-        <div id="paginering-container" class="paginering hidden"></div>
     </div>
 
     <script>
-        let allaRutter = [];
-        let filtreradeRutter = [];
-        let nuvarandeSida = 1;
-        const raderPerSida = 20;
-
-        // 1. Mörkt läge
+        // 1. Initiera mörkt läge
         if (localStorage.getItem('mörkt_tema') === 'true') {
             document.body.classList.add('dark-theme');
         }
@@ -286,154 +244,78 @@
             localStorage.setItem('mörkt_tema', document.body.classList.contains('dark-theme'));
         });
 
-        // 2. Data-hämtning med inbyggd felsökning för Cloudflare
-        const ruttListaElement = document.getElementById('rutt-lista');
-
+        // 2. Ladda rutter och hantera URL-parametrar
         fetch('rutter.csv')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`Kunde inte ladda filen. Status: ${response.status} (${response.statusText}). Se till att filnamnet är exakt rutter.csv med små bokstäver på GitHub.`);
-                }
-                return response.text();
-            })
+            .then(response => response.text())
             .then(data => {
-                // Dela upp rader oavsett om det är Windows (\r\n) eller Linux (\n)
-                let rader = data.split(/\r?\n/).filter(line => line.trim() !== "");
+                let rader = data.split(/\r?\n/).slice(1);
+                let gridHtml = '';
                 
-                if (rader.length === 0) {
-                    throw new Error("CSV-filen är helt tom.");
-                }
-
-                // Kolla om filen använder kommatecken eller semikolon
-                let separator = ',';
-                if (rader[0].includes(';') && !rader[0].includes(',')) {
-                    separator = ';';
-                }
-
-                // Hoppa över rubrikraden (om första raden innehåller text som "start" eller "mal")
-                if (rader.length > 1 && (rader[0].toLowerCase().includes('start') || rader[0].toLowerCase().includes('från'))) {
-                    rader = rader.slice(1);
-                }
-
                 rader.forEach(rad => {
-                    let kolumner = rad.split(separator);
+                    let kolumner = rad.split(',');
                     if(kolumner.length >= 2) {
-                        let start = kolumner[0].replace(/"/g, '').trim();
-                        let mal = kolumner[1].replace(/"/g, '').trim();
-                        
+                        let start = kolumner[0].trim();
+                        let mal = kolumner[1].trim();
                         if(!start || !mal) return;
 
-                        allaRutter.push({
-                            start: start,
-                            mal: mal,
-                            searchString: `${start.toLowerCase()} ${mal.toLowerCase()}`,
-                            url: `rutt.html?fran=${encodeURIComponent(start)}&till=${encodeURIComponent(mal)}`
-                        });
+                        let urlVänlig = `rutt.html?fran=${encodeURIComponent(start)}&till=${encodeURIComponent(mal)}`;
+                        
+                        gridHtml += `
+                            <a href="${urlVänlig}" class="rutt-kort" data-search="${start.toLowerCase()} ${mal.toLowerCase()}" data-start="${start}" data-mal="${mal}">
+                                <div class="ikon-box">📍</div>
+                                <div class="rutt-info">
+                                    <div class="rutt-titel">${start} ➔ ${mal}</div>
+                                    <div class="rutt-detalj">🚗 Pendla med bil</div>
+                                </div>
+                            </a>
+                        `;
                     }
                 });
-
-                if (allaRutter.length === 0) {
-                    throw new Error("CSV-filen lästes in, men koden hittade inga giltiga rader med två kolumner. Kontrollera filens struktur.");
-                }
-
-                filtreradeRutter = [...allaRutter];
                 
-                // Hantera URL-parametrar direkt
+                document.getElementById('rutt-lista').innerHTML = gridHtml || '<div class="laddar">Inga rutter hittades.</div>';
+                
+                // --- NU KÖR VI PARAMETER-LOGIKEN (När korten finns i DOM) ---
                 const params = new URLSearchParams(window.location.search);
                 const fran = params.get('fran');
                 const till = params.get('till');
 
                 if (fran && till) {
                     const sökInput = document.getElementById('sök-input');
+                    const tomMeddelande = document.getElementById('tom-sökning');
+                    const kort = document.querySelectorAll('.rutt-kort');
+                    
                     const sökSträng = (fran + " " + till).toLowerCase();
                     if (sökInput) sökInput.value = fran + " " + till;
-                    
-                    filtreradeRutter = allaRutter.filter(r => r.searchString.includes(sökSträng));
+
+                    let synligaKort = 0;
+                    kort.forEach(r => {
+                        const sökText = r.getAttribute('data-search');
+                        if (sökText && sökText.includes(sökSträng)) {
+                            r.classList.remove('hidden');
+                            synligaKort++;
+                        } else {
+                            r.classList.add('hidden');
+                        }
+                    });
+
+                    if (synligaKort === 0) {
+                        tomMeddelande.classList.remove('hidden');
+                    } else {
+                        tomMeddelande.classList.add('hidden');
+                    }
+
                     document.title = "Pendling " + fran + " till " + till;
                 }
 
-                visaSida(1);
                 initieraSökfunktion();
+                initieraKlickHistorik();
                 uppdateraHistorikVy();
             })
             .catch(err => {
-                // Visar felmeddelandet snyggt direkt i listan
-                ruttListaElement.innerHTML = `
-                    <div class="laddar" style="color: #e74c3c; font-weight: bold; grid-column: 1/-1;">
-                        ⚠️ Ett fel uppstod vid inläsning:<br>
-                        <span style="font-family: monospace; font-size: 0.9rem; color: var(--text-color); display: inline-block; margin-top: 10px; background: rgba(0,0,0,0.05); padding: 10px; border-radius: 4px; text-align: left; max-width: 100%;">
-                            ${err.message}
-                        </span>
-                    </div>`;
+                document.getElementById('rutt-lista').innerHTML = '<div class="laddar">Kunde inte ladda rutter.</div>';
             });
 
-        function visaSida(sida) {
-            nuvarandeSida = sida;
-            const ruttLista = document.getElementById('rutt-lista');
-            const tomMeddelande = document.getElementById('tom-sökning');
-            
-            if (filtreradeRutter.length === 0) {
-                ruttLista.innerHTML = '';
-                tomMeddelande.classList.remove('hidden');
-                byggPagineringsKnappar(0);
-                return;
-            }
-
-            tomMeddelande.classList.add('hidden');
-            
-            const startIndex = (sida - 1) * raderPerSida;
-            const slutIndex = Math.min(startIndex + raderPerSida, filtreradeRutter.length);
-            const rutterAttVisa = filtreradeRutter.slice(startIndex, slutIndex);
-
-            let gridHtml = '';
-            rutterAttVisa.forEach(r => {
-                gridHtml += `
-                    <a href="${r.url}" class="rutt-kort" data-start="${r.start}" data-mal="${r.mal}">
-                        <div class="ikon-box">📍</div>
-                        <div class="rutt-info">
-                            <div class="rutt-titel">${r.start} ➔ ${r.mal}</div>
-                            <div class="rutt-detalj">🚗 Pendla med bil</div>
-                        </div>
-                    </a>
-                `;
-            });
-
-            ruttLista.innerHTML = gridHtml;
-            initieraKlickHistorik();
-            
-            const totalaSidor = Math.ceil(filtreradeRutter.length / raderPerSida);
-            byggPagineringsKnappar(totalaSidor);
-        }
-
-        function byggPagineringsKnappar(totalaSidor) {
-            const container = document.getElementById('paginering-container');
-            if (totalaSidor <= 1) {
-                container.classList.add('hidden');
-                return;
-            }
-
-            container.classList.remove('hidden');
-            container.innerHTML = `
-                <button class="paginering-btn" id="prev-page" ${nuvarandeSida === 1 ? 'disabled' : ''}>Föregående</button>
-                <span class="paginering-info">Sida ${nuvarandeSida} av ${totalaSidor} (Totalt ${filtreradeRutter.length} rutter)</span>
-                <button class="paginering-btn" id="next-page" ${nuvarandeSida === totalaSidor ? 'disabled' : ''}>Nästa</button>
-            `;
-
-            document.getElementById('prev-page').addEventListener('click', () => {
-                if (nuvarandeSida > 1) {
-                    visaSida(nuvarandeSida - 1);
-                    window.scrollTo({top: 0, behavior: 'smooth'});
-                }
-            });
-
-            document.getElementById('next-page').addEventListener('click', () => {
-                if (nuvarandeSida < totalaSidor) {
-                    visaSida(nuvarandeSida + 1);
-                    window.scrollTo({top: 0, behavior: 'smooth'});
-                }
-            });
-        }
-
+        // 3. Hjälpfunktioner
         function sparaTillHistorik(typ, text, url = '#') {
             let historik = JSON.parse(localStorage.getItem('pendel_historik')) || [];
             const nu = new Date();
@@ -487,18 +369,29 @@
 
         function initieraSökfunktion() {
             const sökInput = document.getElementById('sök-input');
+            const tomMeddelande = document.getElementById('tom-sökning');
             let sökTimeout;
 
             sökInput.addEventListener('input', function() {
                 const sökOrd = this.value.toLowerCase().trim();
+                const kort = document.querySelectorAll('.rutt-kort');
+                let synligaKort = 0;
 
-                if (sökOrd === '') {
-                    filtreradeRutter = [...allaRutter];
+                kort.forEach(r => {
+                    const sökText = r.getAttribute('data-search');
+                    if (sökText.includes(sökOrd)) {
+                        r.classList.remove('hidden');
+                        synligaKort++;
+                    } else {
+                        r.classList.add('hidden');
+                    }
+                });
+
+                if (synligaKort === 0 && sökOrd !== '') {
+                    tomMeddelande.classList.remove('hidden');
                 } else {
-                    filtreradeRutter = allaRutter.filter(r => r.searchString.includes(sökOrd));
+                    tomMeddelande.classList.add('hidden');
                 }
-
-                visaSida(1);
 
                 clearTimeout(sökTimeout);
                 if (sökOrd.length >= 2) {
