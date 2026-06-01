@@ -5,7 +5,7 @@
     <meta name="google-site-verification" content="8jaeZC80v4yv1_dsSLOFhIzimUA2MLyQEDNlEBIHLf0" />
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gyllenstormś pendlingskalkylator - Tid Avstånd och Driftkostnad</title>
+    <title>Gyllenstorms pendlingskalkylator - Tid Avstånd och Driftkostnad</title>
     <style>
         :root {
             --bg-color: #f4f7f6;
@@ -159,6 +159,11 @@
             transition: all 0.2s ease-in-out;
         }
 
+        .rutt-kort:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
         .rutt-kort.hidden { display: none !important; }
 
         .ikon-box {
@@ -212,7 +217,7 @@
 
     <div class="container">
         <header>
-            <h1>🚗 Gyllenstormś Pendlingskalkylator</h1>
+            <h1>🚗 Gyllenstorms Pendlingskalkylator</h1>
             <p class="subtitle">Min rutt för beräkning av tid, avstånd, driftmedel, skattereduktion och trafiksäkerhetsanalys.</p>
         </header>
 
@@ -227,7 +232,7 @@
         </div>
 
         <div id="rutt-lista" class="rutt-grid">
-            <div class="laddar">Laddar Karl-Johan Gyllenstormś rutter...</div>
+            <div class="laddar">Laddar rutter...</div>
         </div>
         
         <div id="tom-sökning" class="inga-resultat hidden">Inga rutter matchar sökningen.</div>
@@ -248,7 +253,8 @@
         fetch('rutter.csv')
             .then(response => response.text())
             .then(data => {
-                let rader = data.split(/\r?\n/).slice(1);
+                // Filtrerar bort eventuella helt tomma rader i slutet av CSV-filen
+                let rader = data.split(/\r?\n/).slice(1).filter(rad => rad.trim() !== '');
                 let gridHtml = '';
                 
                 rader.forEach(rad => {
@@ -274,7 +280,7 @@
                 
                 document.getElementById('rutt-lista').innerHTML = gridHtml || '<div class="laddar">Inga rutter hittades.</div>';
                 
-                // --- NU KÖR VI PARAMETER-LOGIKEN (När korten finns i DOM) ---
+                // --- PARAMETER-LOGIK ---
                 const params = new URLSearchParams(window.location.search);
                 const fran = params.get('fran');
                 const till = params.get('till');
@@ -284,13 +290,15 @@
                     const tomMeddelande = document.getElementById('tom-sökning');
                     const kort = document.querySelectorAll('.rutt-kort');
                     
-                    const sökSträng = (fran + " " + till).toLowerCase();
+                    const sökSträng1 = fran.toLowerCase();
+                    const sökSträng2 = till.toLowerCase();
                     if (sökInput) sökInput.value = fran + " " + till;
 
                     let synligaKort = 0;
                     kort.forEach(r => {
-                        const sökText = r.getAttribute('data-search');
-                        if (sökText && sökText.includes(sökSträng)) {
+                        const sökText = r.getAttribute('data-search') || '';
+                        // Kollar om både start och mål matchas oberoende av ordning
+                        if (sökText.includes(sökSträng1) && sökText.includes(sökSträng2)) {
                             r.classList.remove('hidden');
                             synligaKort++;
                         } else {
@@ -312,7 +320,7 @@
                 uppdateraHistorikVy();
             })
             .catch(err => {
-                document.getElementById('rutt-lista').innerHTML = '<div class="laddar">Kunde inte ladda rutter.</div>';
+                document.getElementById('rutt-lista').innerHTML = '<div class="laddar">Kunde inte ladda rutter. Se till att rutter.csv finns.</div>';
             });
 
         // 3. Hjälpfunktioner
@@ -377,9 +385,15 @@
                 const kort = document.querySelectorAll('.rutt-kort');
                 let synligaKort = 0;
 
+                // Splittar sökningen på mellanslag så att man kan söka på t.ex. "Sthlm Gbg"
+                const sökOrdArray = sökOrd.split(/\s+/);
+
                 kort.forEach(r => {
-                    const sökText = r.getAttribute('data-search');
-                    if (sökText.includes(sökOrd)) {
+                    const sökText = r.getAttribute('data-search') || '';
+                    // Kontrollerar att ALLA sökord finns med i ruttens data-search
+                    const matcharAllt = sökOrdArray.every(ord => sökText.includes(ord));
+
+                    if (matcharAllt) {
                         r.classList.remove('hidden');
                         synligaKort++;
                     } else {
@@ -397,7 +411,7 @@
                 if (sökOrd.length >= 2) {
                     sökTimeout = setTimeout(() => {
                         sparaTillHistorik('sökning', sökInput.value.trim());
-                    }, 1000);
+                    }, 1500); // Ökat till 1.5s så historiken inte sparas mitt i att man skriver kvickt
                 }
             });
         }
