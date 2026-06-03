@@ -17,29 +17,50 @@ export const onRequest = async (context) => {
       const response = await context.next();
       let html = await response.text();
 
-      // Hämta rutter.csv från ditt eget bygge på servern
-      const csvRequest = new Request(`${url.origin}/rutter.csv`);
-      const csvResponse = await env.ASSETS.fetch(csvRequest);
-      const csvText = await csvResponse.text();
-
-      // Läs och dela upp CSV-filen rad för rad
-      let rader = csvText.split(/\r?\n/);
+      // --- NYTT: Lista över alla dina CSV-filer ---
+      const csvFiler = ['rutter.csv', 'rutter1.csv', 'rutter2.csv', 'rutter3.csv', 'rutter4.csv', 'rutter5.csv'];
       let hittadRad = null;
 
-      for (let i = 1; i < rader.length; i++) {
-        let kolumner = rader[i].split(',');
-        if (kolumner.length >= 5) {
-          let csvFran = kolumner[0].trim().toLowerCase();
-          let csvTill = kolumner[1].trim().toLowerCase();
+      // Loopa igenom varje CSV-fil tills en matchning hittas
+      for (const filNamn of csvFiler) {
+        try {
+          // Hämta aktuell CSV-fil från ditt eget bygge på servern
+          const csvRequest = new Request(`${url.origin}/${filNamn}`);
+          const csvResponse = await env.ASSETS.fetch(csvRequest);
+          
+          if (!csvResponse.ok) continue; // Om filen saknas eller inte kan hämtas, hoppa till nästa
 
-          if (csvFran === franStad.toLowerCase().trim() && csvTill === tillStad.toLowerCase().trim()) {
-            hittadRad = kolumner;
+          const csvText = await csvResponse.text();
+
+          // Läs och dela upp CSV-filen rad för rad
+          let rader = csvText.split(/\r?\n/);
+
+          for (let i = 1; i < rader.length; i++) {
+            let kolumner = rader[i].split(',');
+            if (kolumner.length >= 5) {
+              let csvFran = kolumner[0].trim().toLowerCase();
+              let csvTill = kolumner[1].trim().toLowerCase();
+
+              if (csvFran === franStad.toLowerCase().trim() && csvTill === tillStad.toLowerCase().trim()) {
+                hittadRad = kolumner;
+                break; // Avbryt rad-loopen
+              }
+            }
+          }
+
+          // Om vi hittade rutten i denna fil, avbryt även fil-loopen
+          if (hittadRad) {
             break;
           }
+        } catch (filFel) {
+          // Om en enskild fil misslyckas, logga eller fortsätt bara till nästa
+          console.error(`Fel vid läsning av ${filNamn}:`, filFel);
+          continue;
         }
       }
+      // --- SLUT PÅ NY SEKTION ---
 
-      // 3. Om rutten hittas i din CSV-fil, bygg HTML på servern
+      // 3. Om rutten hittas i någon av dina CSV-filer, bygg HTML på servern
       if (hittadRad) {
         const km = parseFloat(hittadRad[2].replace(/[^\d.]/g, ''));
         const tid = hittadRad[3].trim();
@@ -66,7 +87,7 @@ export const onRequest = async (context) => {
         }
         const nettoArsKostnad = arsKostnadBrutto - skatteLättnad;
 
-        // Bygg upp det unika innehållet (Exakt samma struktur som din JS-kod bygger)
+        // Bygg upp det unika innehållet
         const uniktInnehall = `
           <div id="innehall">
             <div class="kalkyl-grid">
