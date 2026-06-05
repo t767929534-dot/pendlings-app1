@@ -18,7 +18,7 @@ export const onRequest = async (context) => {
       let html = await response.text();
 
       // --- NYTT: Lista över alla dina CSV-filer ---
-      const csvFiler = ['rutter.csv', 'rutter1.csv', 'rutter2.csv', 'rutter3.csv', 'rutter4.csv', 'rutter5.csv'];
+      const csvFiler = ['rutter.csv', 'rutter1.csv', 'rutter2.csv', 'rutter3.csv', 'rutter4.csv', 'rutter5.csv', 'skane.csv', 'kronoberg.csv', 'blekinge.csv', 'halland.csv', 'kalmar.csv', 'vastragotaland.csv', 'norrland.csv', 'sodermanland.csv', 'stockholm.csv', 'dalarna.csv', 'vasterbotten.csv', 'jamtland.csv'];
       let hittadRad = null;
 
       // Loopa igenom varje CSV-fil tills en matchning hittas
